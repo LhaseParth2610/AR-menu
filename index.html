@@ -1,82 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>AR Menu</title>
-  <!-- model-viewer -->
-  <script type="module" 
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>AR Burger Menu (Android Test)</title>
+  <script type="module"
     src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
   </script>
   <style>
-    body { margin:0; font-family: sans-serif; }
-    .container { display:flex; flex-direction: column; height:100vh; }
+    body, html { margin:0; padding:0; height:100%; overflow:hidden; font-family:sans-serif; }
+    /* full-screen camera background */
+    #camera-bg {
+      position:fixed; inset:0; width:100%; height:100%;
+      object-fit:cover; z-index:-1;
+    }
+    /* swipe carousel container */
     .carousel {
-      flex:1;
-      display:flex;
-      overflow-x:auto;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
+      display:flex; overflow-x:auto;
+      scroll-snap-type:x mandatory; height:100%;
+      -webkit-overflow-scrolling:touch;
     }
     .slide {
-      flex:0 0 100%;
-      scroll-snap-align: start;
-      box-sizing: border-box;
-      padding: 16px;
-      text-align: center;
+      flex:0 0 100%; scroll-snap-align:start;
+      box-sizing:border-box; padding:16px; text-align:center;
+      background:rgba(0,0,0,0.4);
+      color:#fff;
     }
-    .slide h2 { margin: 8px 0; }
-    .slide model-viewer { width: 100%; height: 60vh; }
-    footer {
-      padding:12px;
-      text-align:center;
-      background:#fafafa;
-      border-top:1px solid #eee;
+    .slide h2 { margin:8px 0; font-size:1.5rem; }
+    .price    { font-size:1.2rem; color:#FFD740; margin:4px 0; }
+    .slide p  { margin:4px 0 16px; }
+    model-viewer {
+      width:100%; height:50vh;
+      background:transparent;
+      border-radius:8px; overflow:hidden;
     }
-    footer img { width: 100px; }
+    /* optional fallback button (hidden until needed) */
+    #fallback {
+      display:none;
+      position:fixed; bottom:16px; left:50%;
+      transform:translateX(-50%);
+      padding:12px 24px; background:#FF7043;
+      color:#fff; border:none; border-radius:4px;
+      font-size:1rem; cursor:pointer;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
 
-    <!-- 1) Carousel of dishes -->
-    <div class="carousel">
-      <!-- Slide for Dish 1 -->
+  <!-- 1) live rear camera -->
+  <video id="camera-bg" autoplay playsinline muted></video>
+
+  <!-- 2) swipe‐through carousel -->
+  <div class="carousel">
+      <!-- Slide 1 -->
       <div class="slide">
-        <h2>Dish 1 Name</h2>
-        <model-viewer
+        <h2>Classic Cheeseburger</h2>
+        <p class="price">₹299</p>
+        <model-viewer id="mv1"
           src="models/dish1.glb"
-          ios-src="models/dish1.usdz"
-          alt="Dish 1"
-          ar ar-modes="scene-viewer quick-look"
+          ar ar-modes="scene-viewer"
           camera-controls
-          loading="lazy">
+          interaction-prompt="none"
+          loading="eager"
+          auto-rotate
+          auto-rotate-delay="0"
+          rotation-per-second="30deg">
         </model-viewer>
-        <p>Short description of Dish 1.</p>
+        <p>Juicy chicken patty, cheddar, lettuce & special sauce.</p>
       </div>
 
-      <!-- Slide for Dish 2 -->
+      <!-- Slide 2 -->
       <div class="slide">
-        <h2>Dish 2 Name</h2>
-        <model-viewer
+        <h2>Veggie Delight Burger</h2>
+        <p class="price">₹249</p>
+        <model-viewer id="mv2"
           src="models/dish2.glb"
-          ios-src="models/dish2.usdz"
-          alt="Dish 2"
-          ar ar-modes="scene-viewer quick-look"
+          ar ar-modes="scene-viewer"
           camera-controls
-          loading="lazy">
+          interaction-prompt="none"
+          loading="eager"
+          auto-rotate
+          auto-rotate-delay="0"
+          rotation-per-second="30deg">
         </model-viewer>
-        <p>Short description of Dish 2.</p>
-      </div>
-    </div>
+        <p>Grilled chickpea patty, avocado, spinach & aioli.</p>
+      </div> 
+   </div>
 
-    <!-- 2) Footer with scan-instructions & QR -->
-    <footer>
-      <p>Swipe left/right to browse. Tap the model to view in AR.</p>
-      <!-- <img src="assets/qr-menu.png" alt="Scan to reopen this AR menu"> -->
-      <p>Scan again at any time to jump back here.</p>
-    </footer>
+  <!-- 3) fallback button if auto‐AR fails -->
+  <button id="fallback">Tap Here to View in AR</button>
 
-  </div>
+  <script>
+    // 1) Start the rear camera behind everything
+    (async()=>{
+      try{
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video:{ facingMode:{ exact:"environment" } }
+        });
+        document.getElementById('camera-bg').srcObject = stream;
+      } catch(e){
+        const s = await navigator.mediaDevices.getUserMedia({ video:true });
+        document.getElementById('camera-bg').srcObject = s;
+      }
+    })();
+
+
+
+    // 3) Fallback button wiring
+    document.getElementById('fallback').addEventListener('click', () => {
+      document.getElementById('mv1').activateAR();
+    });
+  </script>
 </body>
 </html>
