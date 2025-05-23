@@ -99,15 +99,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AR Menu</title>
   <!-- model-viewer -->
-  <script type="module"
-    src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
-  </script>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <style>
-    body { margin: 0; font-family: sans-serif; }
-    .container { display: flex; flex-direction: column; height: 100vh; }
+    body {
+      margin: 0;
+      font-family: sans-serif;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
     .carousel {
       flex: 1;
       display: flex;
@@ -122,8 +127,13 @@
       padding: 16px;
       text-align: center;
     }
-    .slide h2 { margin: 8px 0; }
-    .slide model-viewer { width: 100%; height: 60vh; }
+    .slide h2 {
+      margin: 8px 0;
+    }
+    .slide model-viewer {
+      width: 100%;
+      height: 60vh;
+    }
     .ar-button {
       margin-top: 12px;
       padding: 10px 20px;
@@ -133,6 +143,8 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
     }
     footer {
       padding: 12px;
@@ -140,67 +152,68 @@
       background: #fafafa;
       border-top: 1px solid #eee;
     }
-    footer img { width: 100px; }
+    footer img {
+      width: 100px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-
     <!-- 1) Carousel of dishes -->
     <div class="carousel">
       <!-- Slide for Dish 1 -->
       <div class="slide">
-        <h2>Dish 1 Name</h2>
+        <h2>Classic Cheeseburger</h2>
         <model-viewer
           src="models/dish1.glb"
           ios-src="models/dish1.usdz"
-          alt="Dish 1"
+          alt="Classic Cheeseburger"
           ar
           ar-modes="webxr scene-viewer quick-look"
           camera-controls
           loading="lazy">
         </model-viewer>
-        <p>Short description of Dish 1.</p>
+        <p>A delicious cheeseburger with fresh lettuce, tomato, and melted cheese.</p>
         <!-- AR Button for Android -->
         <a
           class="ar-button"
           href="intent://arvr.google.com/scene-viewer/1.0?file=https://ar-menu-git-master-parth-lhases-projects.vercel.app/models/dish1.glb&mode=ar_preferred#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=https://ar-menu-git-master-parth-lhases-projects.vercel.app/ar-menu.html;end">
-          View Dish 1 in AR (Android)
+          View Classic Cheeseburger in AR (Android)
         </a>
         <!-- AR Button for iOS -->
         <a
           class="ar-button"
           rel="ar"
           href="https://ar-menu-git-master-parth-lhases-projects.vercel.app/models/dish1.usdz">
-          View Dish 1 in AR (iOS)
+          View Classic Cheeseburger in AR (iOS)
         </a>
       </div>
 
       <!-- Slide for Dish 2 -->
       <div class="slide">
-        <h2>Dish 2 Name</h2>
+        <h2>Double Bacon Burger</h2>
         <model-viewer
           src="models/dish2.glb"
           ios-src="models/dish2.usdz"
-          alt="Dish 2"
+          alt="Double Bacon Burger"
           ar
           ar-modes="webxr scene-viewer quick-look"
           camera-controls
           loading="lazy">
         </model-viewer>
-        <p>Short description of Dish 2.</p>
+        <p>A mouthwatering double patty burger with crispy bacon and BBQ sauce.</p>
         <!-- AR Button for Android -->
         <a
           class="ar-button"
           href="intent://arvr.google.com/scene-viewer/1.0?file=https://ar-menu-git-master-parth-lhases-projects.vercel.app/models/dish2.glb&mode=ar_preferred#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=https://ar-menu-git-master-parth-lhases-projects.vercel.app/ar-menu.html;end">
-          View Dish 2 in AR (Android)
+          View Double Bacon Burger in AR (Android)
         </a>
         <!-- AR Button for iOS -->
         <a
           class="ar-button"
           rel="ar"
           href="https://ar-menu-git-master-parth-lhases-projects.vercel.app/models/dish2.usdz">
-          View Dish 2 in AR (iOS)
+          View Double Bacon Burger in AR (iOS)
         </a>
       </div>
     </div>
@@ -211,7 +224,20 @@
       <img src="assets/qr-menu.png" alt="Scan to reopen this AR menu">
       <p>Scan again at any time to jump back here.</p>
     </footer>
-
   </div>
+
+  <script>
+    // Automatically trigger AR mode when the model is clicked
+    const modelViewers = document.querySelectorAll('model-viewer');
+    modelViewers.forEach((viewer) => {
+      viewer.addEventListener('click', () => {
+        if (viewer.canActivateAR) {
+          viewer.activateAR();
+        } else {
+          alert('AR is not supported on this device.');
+        }
+      });
+    });
+  </script>
 </body>
 </html>
