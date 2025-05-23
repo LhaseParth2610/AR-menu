@@ -96,18 +96,7 @@
       }
     })();
 
-    // 2) One‐tap AR activation for the first model
-    let activated = false;
-    document.body.addEventListener('touchend', evt => {
-      if (activated) return;
-      activated = true;
-      // Launch AR for the first slide’s model
-      document.getElementById('mv1').activateAR()
-        .catch(_ => {
-          // If AR fails (old device), show fallback button
-          document.getElementById('fallback').style.display = 'block';
-        });
-    }, { once: true });
+
 
     // 3) Fallback button wiring
     document.getElementById('fallback').addEventListener('click', () => {
