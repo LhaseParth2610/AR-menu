@@ -51,7 +51,7 @@
 
   <!-- 2) swipe‐through carousel -->
   <div class="carousel">
-    <!-- Slide 1 -->
+      <!-- Slide 1 -->
       <div class="slide">
         <h2>Classic Cheeseburger</h2>
         <p class="price">₹299</p>
@@ -62,6 +62,7 @@
           interaction-prompt="none"
           loading="eager"
           auto-rotate
+          auto-rotate-delay="0"
           rotation-per-second="30deg">
         </model-viewer>
         <p>Juicy chicken patty, cheddar, lettuce & special sauce.</p>
@@ -78,11 +79,12 @@
           interaction-prompt="none"
           loading="eager"
           auto-rotate
+          auto-rotate-delay="0"
           rotation-per-second="30deg">
         </model-viewer>
         <p>Grilled chickpea patty, avocado, spinach & aioli.</p>
-      </div>
-  </div>
+      </div> 
+   </div>
 
   <!-- 3) fallback button if auto‐AR fails -->
   <button id="fallback">Tap Here to View in AR</button>
