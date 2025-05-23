@@ -1,189 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>AR Burger Menu</title>
-  <!-- model-viewer -->
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>AR Burger Menu (Android Test)</title>
   <script type="module"
     src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
   </script>
   <style>
+    body, html { margin:0; padding:0; height:100%; overflow:hidden; font-family:sans-serif; }
     /* full-screen camera background */
     #camera-bg {
-      position: fixed;
-      inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      z-index: -1;
+      position:fixed; inset:0; width:100%; height:100%;
+      object-fit:cover; z-index:-1;
     }
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      color: #fff;
-      background: rgba(0,0,0,0.3);
-    }
-    .container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-    /* swipe carousel */
+    /* swipe carousel container */
     .carousel {
-      flex: 1;
-      display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
+      display:flex; overflow-x:auto;
+      scroll-snap-type:x mandatory; height:100%;
+      -webkit-overflow-scrolling:touch;
     }
     .slide {
-      flex: 0 0 100%;
-      scroll-snap-align: start;
-      padding: 16px;
-      text-align: center;
-      background: rgba(0,0,0,0.5);
+      flex:0 0 100%; scroll-snap-align:start;
+      box-sizing:border-box; padding:16px; text-align:center;
+      background:rgba(0,0,0,0.4);
+      color:#fff;
     }
-    .slide h2 { margin: 8px 0; font-size: 1.4rem; }
-    .slide p { margin: 4px 0; }
-    .price { font-size: 1.2rem; font-weight: bold; color: #FFD740; }
+    .slide h2 { margin:8px 0; font-size:1.5rem; }
+    .price    { font-size:1.2rem; color:#FFD740; margin:4px 0; }
+    .slide p  { margin:4px 0 16px; }
     model-viewer {
-      width: 100%;
-      height: 45vh;
-      background: transparent !important;
-      border-radius: 8px;
-      overflow: hidden;
-      display: block;
+      width:100%; height:50vh;
+      background:transparent;
+      border-radius:8px; overflow:hidden;
     }
-    /* AR button styling */
-    .ar-button {
-      display: inline-block;
-      margin: 12px 6px;
-      padding: 10px 18px;
-      font-size: 1rem;
-      background: #FF7043;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      text-decoration: none;
-      cursor: pointer;
+    /* optional fallback button (hidden until needed) */
+    #fallback {
+      display:none;
+      position:fixed; bottom:16px; left:50%;
+      transform:translateX(-50%);
+      padding:12px 24px; background:#FF7043;
+      color:#fff; border:none; border-radius:4px;
+      font-size:1rem; cursor:pointer;
     }
-    /* footer QR */
-    footer {
-      padding: 12px;
-      text-align: center;
-      background: rgba(0,0,0,0.7);
-      font-size: 0.9rem;
-    }
-    footer img { width: 80px; margin-top: 8px; }
   </style>
 </head>
-
 <body>
-  <!-- camera feed -->
+
+  <!-- 1) live rear camera -->
   <video id="camera-bg" autoplay playsinline muted></video>
 
-  <div class="container">
-    <div class="carousel">
-
-      <!-- Slide 1: Classic Cheeseburger -->
-      <div class="slide">
-        <h2>Classic Cheeseburger</h2>
-        <p class="price">₹299</p>
-        <model-viewer
-          id="mv1"
-          src="models/cheeseburger.glb"
-          ios-src="models/cheeseburger.usdz"
-          alt="3D Classic Cheeseburger"
-          ar
-          ar-modes="webxr scene-viewer quick-look"
-          camera-controls
-          interaction-prompt="auto"
-          loading="lazy">
-        </model-viewer>
-        <p>Juicy beef patty with aged cheddar, crisp lettuce, tomato, onion & our secret sauce.</p>
-
-        <!-- AR buttons (will hide/show via JS) -->
-        <a id="btn1-android"
-           class="ar-button"
-           href="intent://arvr.google.com/scene-viewer/1.0?file=https://ar-menu-git-master-parth-lhases-projects.vercel.app/models/cheeseburger.glb&mode=ar_preferred#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=https://ar-menu-git-master-parth-lhases-projects.vercel.app;end">
-          View in AR
-        </a>
-        <a id="btn1-ios"
-           class="ar-button"
-           rel="ar"
-           href="https://ar-menu-git-master-parth-lhases-projects.vercel.app/models/cheeseburger.usdz">
-          View in AR
-        </a>
-      </div>
-
-      <!-- Slide 2: Veggie Delight Burger -->
-      <div class="slide">
-        <h2>Veggie Delight Burger</h2>
-        <p class="price">₹249</p>
-        <model-viewer
-          id="mv2"
-          src="models/veggieburger.glb"
-          ios-src="models/veggieburger.usdz"
-          alt="3D Veggie Delight Burger"
-          ar
-          ar-modes="webxr scene-viewer quick-look"
-          camera-controls
-          interaction-prompt="auto"
-          loading="lazy">
-        </model-viewer>
-        <p>Grilled chickpea & spinach patty, avocado, roasted peppers & garlicky aioli.</p>
-
-        <a id="btn2-android"
-           class="ar-button"
-           href="intent://arvr.google.com/scene-viewer/1.0?file=https://ar-menu-git-master-parth-lhases-projects.vercel.app/models/veggieburger.glb&mode=ar_preferred#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=https://ar-menu-git-master-parth-lhases-projects.vercel.app;end">
-          View in AR
-        </a>
-        <a id="btn2-ios"
-           class="ar-button"
-           rel="ar"
-           href="https://ar-menu-git-master-parth-lhases-projects.vercel.app/models/veggieburger.usdz">
-          View in AR
-        </a>
-      </div>
-
+  <!-- 2) swipe‐through carousel -->
+  <div class="carousel">
+    <!-- Slide 1 -->
+    <div class="slide">
+      <h2>Classic Cheeseburger</h2>
+      <p class="price">₹299</p>
+      <model-viewer id="mv1"
+        src="models/dish1.glb"
+        ar ar-modes="scene-viewer"
+        camera-controls
+        interaction-prompt="none"
+        loading="eager">
+      </model-viewer>
+      <p>Juicy beef patty, cheddar, lettuce & special sauce.</p>
     </div>
-
-    <!-- Footer with instructions & QR -->
-    <footer>
-      <p>Swipe ← → to browse. Tap “View in AR” to place in your space.</p>
-      <p>Scan again to return:</p>
-      <img src="assets/qr-menu.png" alt="Scan to reopen AR menu">
-    </footer>
+    <!-- Slide 2 -->
+    <div class="slide">
+      <h2>Veggie Delight Burger</h2>
+      <p class="price">₹249</p>
+      <model-viewer id="mv2"
+        src="models/dish2.glb"
+        ar ar-modes="scene-viewer"
+        camera-controls
+        interaction-prompt="none"
+        loading="eager">
+      </model-viewer>
+      <p>Grilled chickpea patty, avocado, spinach & aioli.</p>
+    </div>
   </div>
 
+  <!-- 3) fallback button if auto‐AR fails -->
+  <button id="fallback">Tap Here to View in AR</button>
+
   <script>
-    // 1) Camera feed setup
-    async function openCamera() {
-      try {
+    // 1) Start the rear camera behind everything
+    (async()=>{
+      try{
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { exact: "environment" } }
+          video:{ facingMode:{ exact:"environment" } }
         });
         document.getElementById('camera-bg').srcObject = stream;
-      } catch {
-        const fallback = await navigator.mediaDevices.getUserMedia({ video: true });
-        document.getElementById('camera-bg').srcObject = fallback;
+      } catch(e){
+        const s = await navigator.mediaDevices.getUserMedia({ video:true });
+        document.getElementById('camera-bg').srcObject = s;
       }
-    }
-    openCamera();
+    })();
 
-    // 2) Platform detection & UI tweaks
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    const isIOS     = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    // 2) One‐tap AR activation for the first model
+    let activated = false;
+    document.body.addEventListener('touchend', evt => {
+      if (activated) return;
+      activated = true;
+      // Launch AR for the first slide’s model
+      document.getElementById('mv1').activateAR()
+        .catch(_ => {
+          // If AR fails (old device), show fallback button
+          document.getElementById('fallback').style.display = 'block';
+        });
+    }, { once: true });
 
-    // Hide inline viewer & show only AR button on Android
-    if (isAndroid) {
-      document.querySelectorAll('model-viewer').forEach(mv => mv.style.display = 'none');
-      document.querySelectorAll('[id$="-ios"]').forEach(el => el.style.display = 'none');
-    }
-    // On iOS hide Android-intent buttons
-    if (isIOS) {
-      document.querySelectorAll('[id$="-android"]').forEach(el => el.style.display = 'none');
-    }
+    // 3) Fallback button wiring
+    document.getElementById('fallback').addEventListener('click', () => {
+      document.getElementById('mv1').activateAR();
+    });
   </script>
 </body>
 </html>
