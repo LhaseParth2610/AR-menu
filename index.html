@@ -71,52 +71,64 @@
 
     // 4) Start AR session on user gesture
     document.getElementById('launcher').addEventListener('click', async () => {
-      // Show an alert to register the user gesture
-      alert("Camera access is required to enter AR. Tap OK to continue.");
+      try {
+        // Show an alert to register the user gesture
+        alert("Camera access is required to enter AR. Tap OK to continue.");
 
-      // Hide the launcher overlay
-      document.getElementById('launcher').style.display = 'none';
+        // Hide the launcher overlay
+        document.getElementById('launcher').style.display = 'none';
 
-      // Initialize the scene
-      initScene();
+        // Initialize the scene
+        initScene();
 
-      // Add the standardized ARButton—but hide it (we’re already in XR)
-      document.body.appendChild(ARButton.createButton(renderer, {
-        requiredFeatures: ['hit-test']
-      })).style.display = 'none';
+        // Add the standardized ARButton—but hide it (we’re already in XR)
+        const arButton = ARButton.createButton(renderer, {
+          requiredFeatures: ['hit-test']
+        });
+        document.body.appendChild(arButton);
+        arButton.style.display = 'none';
 
-      // Load the first model
-      loader.load(`models/${models[idx]}`, gltf => {
-        current = gltf.scene;
-        current.scale.set(0.5, 0.5, 0.5);
-      });
+        // Start the XR session
+        await renderer.xr.setSession(await navigator.xr.requestSession('immersive-ar', {
+          requiredFeatures: ['hit-test']
+        }));
 
-      // Hit-test setup
-      const session = renderer.xr.getSession();
-      const viewerSpace = await session.requestReferenceSpace('viewer');
-      const hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
-      const refSpace = await session.requestReferenceSpace('local-floor');
+        // Load the first model
+        loader.load(`models/${models[idx]}`, gltf => {
+          current = gltf.scene;
+          current.scale.set(0.5, 0.5, 0.5);
+        });
 
-      // Render loop
-      renderer.setAnimationLoop((_, frame) => {
-        if (frame) {
-          const hits = frame.getHitTestResults(hitTestSource);
-          if (hits.length) {
-            const pose = hits[0].getPose(refSpace);
-            reticle.visible = true;
-            reticle.position.set(pose.transform.position.x,
-                                 pose.transform.position.y,
-                                 pose.transform.position.z);
+        // Hit-test setup
+        const session = renderer.xr.getSession();
+        const viewerSpace = await session.requestReferenceSpace('viewer');
+        const hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
+        const refSpace = await session.requestReferenceSpace('local-floor');
 
-            // Auto-place model on first detection
-            if (current && !current.parent) {
-              current.position.copy(reticle.position);
-              scene.add(current);
+        // Render loop
+        renderer.setAnimationLoop((_, frame) => {
+          if (frame) {
+            const hits = frame.getHitTestResults(hitTestSource);
+            if (hits.length) {
+              const pose = hits[0].getPose(refSpace);
+              reticle.visible = true;
+              reticle.position.set(pose.transform.position.x,
+                                   pose.transform.position.y,
+                                   pose.transform.position.z);
+
+              // Auto-place model on first detection
+              if (current && !current.parent) {
+                current.position.copy(reticle.position);
+                scene.add(current);
+              }
             }
           }
-        }
-        renderer.render(scene, camera);
-      });
+          renderer.render(scene, camera);
+        });
+      } catch (error) {
+        console.error("Failed to start AR session:", error);
+        alert("AR session could not be started. Please ensure your device supports WebXR.");
+      }
     });
 
     // 5) Swipe to change dish
