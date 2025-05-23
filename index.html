@@ -45,17 +45,29 @@
       <div class="slide">
         <h2>Dish 1 Name</h2>
         <model-viewer
-        src="models/dish1.glb"
-        ios-src="models/dish1.usdz"
-        alt="Dish 1"
-        ar
-        ar-modes="scene-viewer quick-look"
-        camera-controls
-        loading="lazy"
-        environment-image="neutral">
-      </model-viewer>
+          id="dish1-viewer"
+          src="models/dish1.glb"
+          ios-src="models/dish1.usdz"
+          alt="Dish 1"
+          ar
+          ar-modes="scene-viewer quick-look"
+          ar-scale="auto"
+          camera-controls
+          loading="lazy"
+          environment-image="neutral">
+        </model-viewer>
         <p>Short description of Dish 1.</p>
       </div>
+      
+      <script>
+        // Automatically trigger AR mode when the model is clicked
+        const modelViewer = document.getElementById('dish1-viewer');
+        modelViewer.addEventListener('click', () => {
+          if (modelViewer.canActivateAR) {
+            modelViewer.activateAR();
+          }
+        });
+      </script>
 
       <!-- Slide for Dish 2 -->
       <div class="slide">
