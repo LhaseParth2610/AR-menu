@@ -2,38 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>AR Burger Menu</title>
-
-  <!-- Google Model Viewer -->
+  <!-- model-viewer -->
   <script type="module"
     src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
   </script>
-
   <style>
-    /* Full-screen camera background */
+    /* full-screen camera background */
     #camera-bg {
       position: fixed;
-      top: 0; left: 0;
+      inset: 0;
       width: 100%; height: 100%;
       object-fit: cover;
       z-index: -1;
     }
-
-    /* Page layout */
     body {
       margin: 0;
       font-family: sans-serif;
-      background: rgba(0,0,0,0.3);
       color: #fff;
+      background: rgba(0,0,0,0.3);
     }
     .container {
       display: flex;
       flex-direction: column;
       height: 100vh;
     }
-
-    /* Carousel styling */
+    /* swipe carousel */
     .carousel {
       flex: 1;
       display: flex;
@@ -44,69 +39,58 @@
     .slide {
       flex: 0 0 100%;
       scroll-snap-align: start;
-      box-sizing: border-box;
       padding: 16px;
       text-align: center;
       background: rgba(0,0,0,0.5);
     }
-    .slide h2 {
-      margin: 8px 0;
-      font-size: 1.4rem;
-    }
-    .slide p {
-      margin: 8px 0;
-      font-size: 1rem;
-    }
-    .slide model-viewer {
+    .slide h2 { margin: 8px 0; font-size: 1.4rem; }
+    .slide p { margin: 4px 0; }
+    .price { font-size: 1.2rem; font-weight: bold; color: #FFD740; }
+    model-viewer {
       width: 100%;
-      height: 50vh;
-      background: #fff;
+      height: 45vh;
+      background: transparent !important;
       border-radius: 8px;
       overflow: hidden;
+      display: block;
     }
-
-    /* AR buttons */
+    /* AR button styling */
     .ar-button {
       display: inline-block;
-      margin: 12px 4px;
-      padding: 10px 16px;
+      margin: 12px 6px;
+      padding: 10px 18px;
       font-size: 1rem;
-      background-color: #FF7043;
+      background: #FF7043;
       color: #fff;
       border: none;
       border-radius: 4px;
       text-decoration: none;
       cursor: pointer;
     }
-
-    /* Footer with QR */
+    /* footer QR */
     footer {
       padding: 12px;
       text-align: center;
       background: rgba(0,0,0,0.7);
-    }
-    footer img {
-      width: 80px;
-      margin-top: 8px;
-    }
-    footer p {
       font-size: 0.9rem;
-      margin: 4px 0;
     }
+    footer img { width: 80px; margin-top: 8px; }
   </style>
 </head>
 
 <body>
-  <!-- 1) camera feed as background -->
+  <!-- camera feed -->
   <video id="camera-bg" autoplay playsinline muted></video>
 
   <div class="container">
-    <!-- 2) carousel of two burgers -->
     <div class="carousel">
-      <!-- Slide: Classic Cheeseburger -->
+
+      <!-- Slide 1: Classic Cheeseburger -->
       <div class="slide">
         <h2>Classic Cheeseburger</h2>
+        <p class="price">₹299</p>
         <model-viewer
+          id="mv1"
           src="models/cheeseburger.glb"
           ios-src="models/cheeseburger.usdz"
           alt="3D Classic Cheeseburger"
@@ -116,25 +100,28 @@
           interaction-prompt="auto"
           loading="lazy">
         </model-viewer>
-        <p>Juicy beef patty with cheddar, lettuce, tomato & special sauce.</p>
+        <p>Juicy beef patty with aged cheddar, crisp lettuce, tomato, onion & our secret sauce.</p>
 
-        <!-- Android Scene Viewer Intent -->
-        <a class="ar-button"
+        <!-- AR buttons (will hide/show via JS) -->
+        <a id="btn1-android"
+           class="ar-button"
            href="intent://arvr.google.com/scene-viewer/1.0?file=https://ar-menu-git-master-parth-lhases-projects.vercel.app/models/cheeseburger.glb&mode=ar_preferred#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=https://ar-menu-git-master-parth-lhases-projects.vercel.app;end">
-          View in AR (Android)
+          View in AR
         </a>
-        <!-- iOS Quick Look -->
-        <a class="ar-button"
+        <a id="btn1-ios"
+           class="ar-button"
            rel="ar"
            href="https://ar-menu-git-master-parth-lhases-projects.vercel.app/models/cheeseburger.usdz">
-          View in AR (iOS)
+          View in AR
         </a>
       </div>
 
-      <!-- Slide: Veggie Delight Burger -->
+      <!-- Slide 2: Veggie Delight Burger -->
       <div class="slide">
         <h2>Veggie Delight Burger</h2>
+        <p class="price">₹249</p>
         <model-viewer
+          id="mv2"
           src="models/veggieburger.glb"
           ios-src="models/veggieburger.usdz"
           alt="3D Veggie Delight Burger"
@@ -144,45 +131,59 @@
           interaction-prompt="auto"
           loading="lazy">
         </model-viewer>
-        <p>Grilled veggie patty, avocado, spinach, & garlic aioli.</p>
+        <p>Grilled chickpea & spinach patty, avocado, roasted peppers & garlicky aioli.</p>
 
-        <!-- Android Scene Viewer Intent -->
-        <a class="ar-button"
+        <a id="btn2-android"
+           class="ar-button"
            href="intent://arvr.google.com/scene-viewer/1.0?file=https://ar-menu-git-master-parth-lhases-projects.vercel.app/models/veggieburger.glb&mode=ar_preferred#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=https://ar-menu-git-master-parth-lhases-projects.vercel.app;end">
-          View in AR (Android)
+          View in AR
         </a>
-        <!-- iOS Quick Look -->
-        <a class="ar-button"
+        <a id="btn2-ios"
+           class="ar-button"
            rel="ar"
            href="https://ar-menu-git-master-parth-lhases-projects.vercel.app/models/veggieburger.usdz">
-          View in AR (iOS)
+          View in AR
         </a>
       </div>
+
     </div>
 
-    <!-- 3) Footer with instructions & QR -->
+    <!-- Footer with instructions & QR -->
     <footer>
-      <p>Swipe ← → to browse burgers. Tap “View in AR” to place.</p>
+      <p>Swipe ← → to browse. Tap “View in AR” to place in your space.</p>
       <p>Scan again to return:</p>
       <img src="assets/qr-menu.png" alt="Scan to reopen AR menu">
     </footer>
   </div>
 
   <script>
-    // Request rear camera on load
-    async function startCamera() {
+    // 1) Camera feed setup
+    async function openCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { exact: "environment" } }
         });
         document.getElementById('camera-bg').srcObject = stream;
-      } catch (e) {
-        console.warn("Rear camera not accessible, using default.");
+      } catch {
         const fallback = await navigator.mediaDevices.getUserMedia({ video: true });
         document.getElementById('camera-bg').srcObject = fallback;
       }
     }
-    startCamera();
+    openCamera();
+
+    // 2) Platform detection & UI tweaks
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isIOS     = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    // Hide inline viewer & show only AR button on Android
+    if (isAndroid) {
+      document.querySelectorAll('model-viewer').forEach(mv => mv.style.display = 'none');
+      document.querySelectorAll('[id$="-ios"]').forEach(el => el.style.display = 'none');
+    }
+    // On iOS hide Android-intent buttons
+    if (isIOS) {
+      document.querySelectorAll('[id$="-android"]').forEach(el => el.style.display = 'none');
+    }
   </script>
 </body>
 </html>
