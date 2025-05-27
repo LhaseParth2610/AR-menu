@@ -1,40 +1,102 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>AR Menu - Pizza</title>
+    <title>AR Menu - Swipe Models</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
     <style>
-      body, html { margin: 0; overflow: hidden; }
+      body, html {
+        margin: 0;
+        overflow: hidden;
+      }
+      .swipe-hint {
+        position: fixed;
+        bottom: 20px;
+        width: 100%;
+        text-align: center;
+        color: white;
+        font-size: 18px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        z-index: 10;
+      }
     </style>
   </head>
 
   <body>
+    <div class="swipe-hint">Swipe left or right to change the model</div>
+
     <a-scene embedded arjs>
-      <!-- Marker for triggering the AR model -->
-        <a-assets>
-            <a-asset-item id="pizzaModel" src="assets/pizza.glb"></a-asset-item>
-            <a-asset-item id="burgerModel" src="assets/burger.glb"></a-asset-item>
-        </a-assets>
+      <!-- Assets -->
+      <a-assets>
+        <a-asset-item id="pizzaModel" src="assets/pizza.glb"></a-asset-item>
+        <a-asset-item id="burgerModel" src="assets/burger.glb"></a-asset-item>
+        <a-asset-item id="pastaModel" src="assets/desert.glb"></a-asset-item>
+      </a-assets>
 
-        <a-marker type="pattern" url="assets/marker.patt">
-            <!-- <a-entity 
-            gltf-model="#pizzaModel"
-            scale="0.5 0.5 0.5"
-            position="0 0 0"
-            rotation="0 0 0"
-            ></a-entity> -->
-            <a-entity 
-            gltf-model="#burgerModel"
-            scale="0.5 0.5 0.5"
-            position="0 0 0"
-            rotation="0 0 0"
-            ></a-entity>
-        </a-marker>
+      <!-- Marker -->
+      <a-marker type="pattern" url="assets/marker.patt">
+        <a-entity
+          id="modelViewer"
+          gltf-model="#pizzaModel"
+          scale="0.5 0.5 0.5"
+          position="0 0 0"
+          rotation="0 0 0">
+        </a-entity>
+      </a-marker>
 
-
-      <!-- Camera for AR -->
+      <!-- Camera -->
       <a-entity camera></a-entity>
     </a-scene>
+
+    <script>
+      // List of models
+      const models = [
+        "#pizzaModel",
+        "#burgerModel",
+        "#desertModel"
+      ];
+
+      let currentIndex = 0; // Track the current model index
+
+      // Function to update the model
+      function updateModel(direction) {
+        // Update the index based on swipe direction
+        if (direction === "left") {
+          currentIndex = (currentIndex + 1) % models.length; // Go to the next model
+        } else if (direction === "right") {
+          currentIndex = (currentIndex - 1 + models.length) % models.length; // Go to the previous model
+        }
+
+        // Update the gltf-model attribute of the entity
+        const modelViewer = document.getElementById("modelViewer");
+        modelViewer.setAttribute("gltf-model", models[currentIndex]);
+      }
+
+      // Detect swipe gestures
+      let touchStartX = null;
+
+      window.addEventListener("touchstart", (event) => {
+        touchStartX = event.touches[0].clientX;
+      });
+
+      window.addEventListener("touchend", (event) => {
+        if (touchStartX === null) return;
+
+        const touchEndX = event.changedTouches[0].clientX;
+        const deltaX = touchEndX - touchStartX;
+
+        if (Math.abs(deltaX) > 50) {
+          // Determine swipe direction
+          if (deltaX > 0) {
+            updateModel("right"); // Swipe right
+          } else {
+            updateModel("left"); // Swipe left
+          }
+        }
+
+        touchStartX = null; // Reset touch start position
+      });
+    </script>
   </body>
 </html>
