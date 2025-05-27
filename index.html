@@ -1,40 +1,89 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>AR Menu - Pizza</title>
+    <title>AR Menu - Carousel</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
     <style>
-      body, html { margin: 0; overflow: hidden; }
+      body, html {
+        margin: 0;
+        overflow: hidden;
+      }
+      .carousel-controls {
+        position: fixed;
+        bottom: 20px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        z-index: 10;
+      }
+      .carousel-controls button {
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #333;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      .carousel-controls button:hover {
+        background-color: #555;
+      }
     </style>
   </head>
 
   <body>
+    <!-- Carousel Controls -->
+    <div class="carousel-controls">
+      <button id="prevButton">Previous</button>
+      <button id="nextButton">Next</button>
+    </div>
+
     <a-scene embedded arjs>
-      <!-- Marker for triggering the AR model -->
-        <a-assets>
-            <a-asset-item id="pizzaModel" src="assets/pizza.glb"></a-asset-item>
-            <a-asset-item id="burgerModel" src="assets/burger.glb"></a-asset-item>
-        </a-assets>
+      <!-- Preload models -->
+      <a-assets>
+        <a-asset-item id="pizzaModel" src="assets/pizza.glb"></a-asset-item>
+        <a-asset-item id="burgerModel" src="assets/burger.glb"></a-asset-item>
+        <!-- <a-asset-item id="pastaModel" src="assets/pasta.glb"></a-asset-item> -->
+      </a-assets>
 
-        <a-marker type="pattern" url="assets/marker.patt">
-            <!-- <a-entity 
-            gltf-model="#pizzaModel"
-            scale="0.5 0.5 0.5"
-            position="0 0 0"
-            rotation="0 0 0"
-            ></a-entity> -->
-            <a-entity 
-            gltf-model="#burgerModel"
-            scale="0.5 0.5 0.5"
-            position="0 0 0"
-            rotation="0 0 0"
-            ></a-entity>
-        </a-marker>
+      <!-- Marker -->
+      <a-marker type="pattern" url="assets/marker.patt">
+        <a-entity
+          id="modelViewer"
+          gltf-model="#pizzaModel"
+          scale="0.5 0.5 0.5"
+          position="0 0 0"
+          rotation="0 0 0">
+        </a-entity>
+      </a-marker>
 
-
-      <!-- Camera for AR -->
+      <!-- Camera -->
       <a-entity camera></a-entity>
     </a-scene>
+
+    <script>
+      // List of models
+      const models = ["#pizzaModel", "#burgerModel"];
+      let currentIndex = 0; // Track the current model index
+
+      // Function to update the model
+      function updateModel() {
+        const modelViewer = document.getElementById("modelViewer");
+        modelViewer.setAttribute("gltf-model", models[currentIndex]);
+      }
+
+      // Event listeners for carousel controls
+      document.getElementById("prevButton").addEventListener("click", () => {
+        currentIndex = (currentIndex - 1 + models.length) % models.length; // Go to the previous model
+        updateModel();
+      });
+
+      document.getElementById("nextButton").addEventListener("click", () => {
+        currentIndex = (currentIndex + 1) % models.length; // Go to the next model
+        updateModel();
+      });
+    </script>
   </body>
 </html>
