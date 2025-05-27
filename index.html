@@ -34,8 +34,8 @@
         <a-asset-item id="pastaModel" src="assets/desert.glb"></a-asset-item>
       </a-assets>
 
-      <!-- Marker -->
-      <a-marker type="pattern" url="assets/marker.patt">
+      <!-- NFT Marker -->
+      <a-nft type="nft" url="assets/nft/marker">
         <a-entity
           id="modelViewer"
           gltf-model="#pizzaModel"
@@ -43,7 +43,7 @@
           position="0 0 0"
           rotation="0 0 0">
         </a-entity>
-      </a-marker>
+      </a-nft>
 
       <!-- Camera -->
       <a-entity camera></a-entity>
@@ -75,24 +75,31 @@
 
       // Detect swipe gestures
       let touchStartX = null;
+      const SWIPE_THRESHOLD = 50; // Minimum distance for a swipe to be registered
+      let isSwiping = false; // Prevent multiple rapid swipes
 
       window.addEventListener("touchstart", (event) => {
         touchStartX = event.touches[0].clientX;
       });
 
       window.addEventListener("touchend", (event) => {
-        if (touchStartX === null) return;
+        if (touchStartX === null || isSwiping) return;
 
         const touchEndX = event.changedTouches[0].clientX;
         const deltaX = touchEndX - touchStartX;
 
-        if (Math.abs(deltaX) > 50) {
-          // Determine swipe direction
+        if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
+          isSwiping = true; // Block further swipes temporarily
           if (deltaX > 0) {
             updateModel("right"); // Swipe right
           } else {
             updateModel("left"); // Swipe left
           }
+
+          // Allow swiping again after a short delay
+          setTimeout(() => {
+            isSwiping = false;
+          }, 300);
         }
 
         touchStartX = null; // Reset touch start position
