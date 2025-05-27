@@ -408,30 +408,32 @@
 
             // --- Start AR Scanning ---
             startButton.addEventListener('click', () => {
-                // Check for camera permissions first (basic check)
-                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    navigator.mediaDevices.getUserMedia({ video: true })
-                        .then((stream) => {
-                            stream.getTracks().forEach(track => track.stop()); // Stop the temporary stream
-                            scanningPermissionUI.style.display = 'none';
-                            sceneEl.emit('startar'); // Custom event to potentially trigger AR start if needed
-                            sceneEl.systems['mindar-image-system'].start(); // Start MindAR
-                            console.log("AR Scanning Started by user.");
-                        })
-                        .catch((err) => {
-                            console.error("Camera permission denied or error:", err);
-                            showMessage("Camera access is required for AR. Please enable camera permissions and refresh.");
-                            scanningPermissionUI.querySelector('p').textContent = "Camera access denied. Please enable camera permissions in your browser settings and refresh the page.";
-                            startButton.textContent = "Refresh Page";
-                            startButton.onclick = () => window.location.reload();
-                        });
-                } else {
-                    showMessage("Your browser does not support camera access (getUserMedia).");
-                    scanningPermissionUI.querySelector('p').textContent = "Your browser doesn't support the necessary features for AR.";
-                    startButton.style.display = 'none';
-                }
-            });
-
+                  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                      navigator.mediaDevices.getUserMedia({ video: true })
+                          .then((stream) => {
+                              stream.getTracks().forEach(track => track.stop()); // Stop the temporary stream
+                              scanningPermissionUI.style.display = 'none';
+                              try {
+                                  sceneEl.systems['mindar-image-system'].start(); // Start MindAR
+                                  console.log("AR Scanning Started by user.");
+                              } catch (error) {
+                                  console.error("Failed to start MindAR system:", error);
+                                  showMessage("Failed to start AR. Please refresh the page and try again.");
+                              }
+                          })
+                          .catch((err) => {
+                              console.error("Camera permission denied or error:", err);
+                              showMessage("Camera access is required for AR. Please enable camera permissions and refresh.");
+                              scanningPermissionUI.querySelector('p').textContent = "Camera access denied. Please enable camera permissions in your browser settings and refresh the page.";
+                              startButton.textContent = "Refresh Page";
+                              startButton.onclick = () => window.location.reload();
+                          });
+                  } else {
+                      showMessage("Your browser does not support camera access (getUserMedia).");
+                      scanningPermissionUI.querySelector('p').textContent = "Your browser doesn't support the necessary features for AR.";
+                      startButton.style.display = 'none';
+                  }
+              });
 
             // --- Initial Setup ---
             if (foodItems.length > 0) {
