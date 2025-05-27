@@ -190,298 +190,106 @@
         <button id="startButton" style="padding: 12px 25px; font-size: 1.1em; color: #333; background-color: #fff; border: none; border-radius: 25px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">Start Scanning</button>
     </div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sceneEl = document.getElementById('ar-scene');
+      // ... (other const declarations remain the same) ...
+      const startButton = document.getElementById('startButton');
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const sceneEl = document.getElementById('ar-scene');
-            const currentDishModelEl = document.getElementById('currentDishModel');
-            const dishNameEl = document.getElementById('dish-name');
-            const dishDescriptionEl = document.getElementById('dish-description');
-            const prevButton = document.getElementById('prevButton');
-            const nextButton = document.getElementById('nextButton');
-            const uiContainer = document.getElementById('ui-container');
-            const loadingIndicator = document.getElementById('loading-indicator');
-            const markerEntity = document.getElementById('marker');
+      // --- INITIALIZE START BUTTON AS DISABLED ---
+      startButton.disabled = true;
+      startButton.style.backgroundColor = '#ccc'; // Visually indicate it's disabled
 
-            const scanningPermissionUI = document.getElementById('scanningPermission');
-            const startButton = document.getElementById('startButton');
+      // ... (foodItems, showMessage, updateDishDisplay, MindAR Event Listeners, Navigation Button Listeners, Swipe Logic - all remain the same) ...
 
+      // --- Start AR Scanning ---
+      startButton.addEventListener('click', () => {
+          // Check if the system is available (it should be if the button is enabled)
+          if (!sceneEl.systems['mindar-image-system']) {
+              showMessage("AR system is not ready. Please refresh the page.");
+              // Keep button disabled or provide further instructions
+              startButton.disabled = true;
+              startButton.style.backgroundColor = '#ccc';
+              return;
+          }
 
-            // --- Food Item Data ---
-            // IMPORTANT:
-            // 1. Replace 'modelSrc' with the IDs of your <a-asset-item>s.
-            // 2. Adjust 'scale' and 'rotation' for each model as needed.
-            // 3. Add your dish names and descriptions.
-            const foodItems = [
-                {
-                    id: 'burger',
-                    name: 'Classic Burger',
-                    description: 'A delicious flame-grilled beef patty with fresh lettuce, tomato, and our special sauce.',
-                    modelSrc: '#dish1Model',
-                    scale: '0.3 0.3 0.3', // Example scale, adjust per model
-                    rotation: '0 0 0'
-                },
-                {
-                    id: 'pizza',
-                    name: 'Pepperoni Pizza',
-                    description: 'Authentic Italian pizza topped with spicy pepperoni and mozzarella cheese.',
-                    modelSrc: '#dish2Model',
-                    scale: '0.008 0.008 0.008', // Example scale
-                    rotation: '0 0 0'
-                },
-                {
-                    id: 'sushi',
-                    name: 'Sushi Platter',
-                    description: 'A fresh selection of salmon, tuna, and avocado sushi rolls.',
-                    modelSrc: '#dish3Model',
-                    scale: '0.2 0.2 0.2', // Example scale
-                    rotation: '0 0 0'
-                },
-                // Add more food items here
-            ];
-            let currentIndex = 0;
-            let markerCurrentlyVisible = false; // Tracks if the marker is currently detected
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+              navigator.mediaDevices.getUserMedia({ video: true })
+                  .then((stream) => {
+                      stream.getTracks().forEach(track => track.stop()); // Stop the temporary stream
+                      scanningPermissionUI.style.display = 'none';
+                      try {
+                          sceneEl.systems['mindar-image-system'].start(); // Start MindAR
+                          console.log("AR Scanning Started by user.");
+                          // NO arError listener here - the global one will handle it
+                      } catch (error) {
+                          console.error("Failed to start MindAR system directly:", error);
+                          showMessage("Failed to start AR. Please refresh the page and check console for details.");
+                          // Optionally, re-show scanning permission UI or guide user
+                          scanningPermissionUI.style.display = 'flex';
+                          startButton.disabled = false; // Allow another attempt
+                          startButton.style.backgroundColor = '#fff';
+                      }
+                  })
+                  .catch((err) => {
+                      console.error("Camera permission denied or error:", err);
+                      showMessage("Camera access is required for AR. Please enable camera permissions and refresh.");
+                      scanningPermissionUI.querySelector('p').textContent = "Camera access denied. Please enable camera permissions in your browser settings and refresh the page.";
+                      startButton.textContent = "Refresh Page";
+                      startButton.onclick = () => window.location.reload();
+                      startButton.disabled = false; // Re-enable for refresh action
+                      startButton.style.backgroundColor = '#fff';
+                  });
+          } else {
+              showMessage("Your browser does not support camera access (getUserMedia).");
+              scanningPermissionUI.querySelector('p').textContent = "Your browser doesn't support the necessary features for AR.";
+              startButton.style.display = 'none';
+          }
+      });
 
-            // --- Utility for Custom Alert ---
-            function showMessage(message) {
-                // Remove existing message box if any
-                const existingMessageBox = document.querySelector('.message-box-overlay');
-                if (existingMessageBox) {
-                    existingMessageBox.remove();
-                }
+      // --- Initial Setup ---
+      // ... (remains the same) ...
 
-                const overlay = document.createElement('div');
-                overlay.className = 'message-box-overlay';
-                const content = document.createElement('div');
-                content.className = 'message-box-content';
-                const text = document.createElement('p');
-                text.textContent = message;
-                const closeButton = document.createElement('button');
-                closeButton.textContent = 'OK';
-                closeButton.onclick = () => overlay.remove();
+      // --- A-Frame scene loaded event ---
+      sceneEl.addEventListener('loaded', () => {
+          console.log('A-Frame scene and MindAR system components loaded.');
+          if (sceneEl.systems['mindar-image-system']) {
+              // --- ENABLE START BUTTON ONCE SCENE AND SYSTEM ARE READY ---
+              startButton.disabled = false;
+              startButton.style.backgroundColor = '#fff';
+              console.log('MindAR system is available. Start button enabled.');
+          } else {
+              console.error('MindAR system not found after A-Frame scene load.');
+              showMessage("A critical AR system component failed to load. Please refresh the page.");
+              scanningPermissionUI.querySelector('p').textContent = "AR system failed to initialize. Please refresh.";
+              startButton.textContent = "Refresh Page";
+              startButton.onclick = () => window.location.reload();
+              startButton.disabled = false; // Enable for refresh action
+              startButton.style.backgroundColor = '#fff';
+          }
+      });
 
-                content.appendChild(text);
-                content.appendChild(closeButton);
-                overlay.appendChild(content);
-                document.body.appendChild(overlay);
-            }
+      // --- Global AR System Error Handler ---
+      // This listener is correctly placed and should handle errors from MindAR
+      sceneEl.addEventListener('arError', (event) => {
+          console.error("MindAR Global Error Event:", event.detail);
+          let message = "An AR error occurred.";
+          if (event.detail.name === 'IMAGE_TARGETS_LOADING_ERROR' || event.detail.error === 'IMAGE_TARGETS_NOT_FOUND' || (event.detail.message && event.detail.message.includes("fetch"))) {
+              message = "Could not load image targets. Please check: \n1. The path to your '.mind' file ('assets/targets.mind') is correct. \n2. The file exists at that location. \n3. The file is not corrupted. \n4. Your web server is serving the file correctly (check network tab for 404 errors).";
+          } else if (event.detail.name === 'WEBCAM_ERROR' || event.detail.error === 'WEBCAM_UNAVAILABLE') {
+              message = "Webcam is unavailable. Please ensure it's not in use by another application and you've granted camera permissions.";
+          } else if (event.detail.message) {
+              message = `AR Error: ${event.detail.message}`;
+          }
 
-
-            // --- Function to Update Dish Display ---
-            const updateDishDisplay = (isInitialLoad = false) => {
-                if (foodItems.length === 0) {
-                    dishNameEl.textContent = "No dishes available";
-                    dishDescriptionEl.textContent = "";
-                    currentDishModelEl.setAttribute('visible', 'false');
-                    return;
-                }
-
-                // Handle array boundaries
-                if (currentIndex < 0) currentIndex = foodItems.length - 1;
-                if (currentIndex >= foodItems.length) currentIndex = 0;
-
-                const item = foodItems[currentIndex];
-
-                dishNameEl.textContent = item.name;
-                dishDescriptionEl.textContent = item.description;
-
-                // Show loading indicator only if the marker is visible or it's not the initial setup for a hidden model
-                if (markerCurrentlyVisible || !isInitialLoad) {
-                    loadingIndicator.style.display = 'block';
-                    currentDishModelEl.setAttribute('visible', 'false'); // Hide old model while new one loads
-                }
-
-
-                // Set new model source
-                currentDishModelEl.setAttribute('gltf-model', item.modelSrc);
-                currentDishModelEl.setAttribute('scale', item.scale);
-                currentDishModelEl.setAttribute('rotation', item.rotation);
-
-                // Animation reset (important for models with animations)
-                currentDishModelEl.removeAttribute('animation-mixer');
-                setTimeout(() => { // Re-add after a tick to ensure reset
-                    currentDishModelEl.setAttribute('animation-mixer', '');
-                }, 0);
-
-
-                // Event listener for when the model is loaded
-                // Using a flag to avoid multiple listeners if user swipes quickly
-                let modelLoadedListenerAttached = false;
-                const onModelLoaded = () => {
-                    loadingIndicator.style.display = 'none';
-                    if (markerCurrentlyVisible) {
-                        currentDishModelEl.setAttribute('visible', 'true');
-                    }
-                    currentDishModelEl.removeEventListener('model-loaded', onModelLoaded);
-                    modelLoadedListenerAttached = false;
-                };
-
-                // Check if the model is already cached/loaded by A-Frame's asset system
-                const assetItem = document.querySelector(item.modelSrc);
-                if (assetItem && assetItem.hasLoaded) {
-                     // If asset is loaded, we might not get 'model-loaded' event consistently
-                     // or it might fire too quickly. So, we manually trigger the logic.
-                    loadingIndicator.style.display = 'none';
-                    if (markerCurrentlyVisible) {
-                        currentDishModelEl.setAttribute('visible', 'true');
-                    }
-                } else if (!modelLoadedListenerAttached) {
-                    currentDishModelEl.addEventListener('model-loaded', onModelLoaded, { once: true });
-                    modelLoadedListenerAttached = true;
-                } else {
-                    // Fallback if event listener logic has issues, ensure loader hides and model shows if marker is visible
-                    setTimeout(() => {
-                        loadingIndicator.style.display = 'none';
-                        if (markerCurrentlyVisible) {
-                           currentDishModelEl.setAttribute('visible', 'true');
-                        }
-                    }, 500); // Small delay as a fallback
-                }
-            };
-
-            // --- MindAR Event Listeners ---
-            if (markerEntity) {
-                markerEntity.addEventListener('targetFound', event => {
-                    console.log("Marker Found!");
-                    markerCurrentlyVisible = true;
-                    uiContainer.classList.remove('hidden-ui');
-                    currentDishModelEl.setAttribute('visible', 'true');
-                    // Update display to ensure the correct model and its visibility are set
-                    updateDishDisplay();
-                });
-
-                markerEntity.addEventListener('targetLost', event => {
-                    console.log("Marker Lost!");
-                    markerCurrentlyVisible = false;
-                    uiContainer.classList.add('hidden-ui');
-                    currentDishModelEl.setAttribute('visible', 'false');
-                    loadingIndicator.style.display = 'none'; // Hide loader if marker is lost
-                });
-            } else {
-                showMessage("AR marker entity not found. Please check the HTML setup.");
-            }
-
-            // --- Navigation Button Event Listeners ---
-            prevButton.addEventListener('click', () => {
-                currentIndex--;
-                updateDishDisplay();
-            });
-
-            nextButton.addEventListener('click', () => {
-                currentIndex++;
-                updateDishDisplay();
-            });
-
-            // --- Swipe Gesture Detection ---
-            let touchstartX = 0;
-            let touchendX = 0;
-            const swipeThreshold = 50; // Minimum pixels to be considered a swipe
-
-            // Use the document body for swipe, or a specific swipeable area if preferred
-            document.body.addEventListener('touchstart', (event) => {
-                // Only register swipe if UI is visible (marker is found)
-                if (!markerCurrentlyVisible || event.target.closest('.nav-button')) return;
-                touchstartX = event.changedTouches[0].screenX;
-            }, { passive: true });
-
-            document.body.addEventListener('touchend', (event) => {
-                if (!markerCurrentlyVisible || touchstartX === 0 || event.target.closest('.nav-button')) {
-                    touchstartX = 0; // Reset for next swipe
-                    return;
-                }
-                touchendX = event.changedTouches[0].screenX;
-                handleSwipe();
-                touchstartX = 0; // Reset for next swipe
-            }, { passive: true });
-
-            function handleSwipe() {
-                const swipeDistance = touchendX - touchstartX;
-                if (Math.abs(swipeDistance) < swipeThreshold) return; // Not a significant swipe
-
-                if (swipeDistance < 0) { // Swiped left (next item)
-                    currentIndex++;
-                } else { // Swiped right (previous item)
-                    currentIndex--;
-                }
-                updateDishDisplay();
-            }
-
-            // --- Start AR Scanning ---
-            startButton.addEventListener('click', () => {
-                  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                      navigator.mediaDevices.getUserMedia({ video: true })
-                          .then((stream) => {
-                              stream.getTracks().forEach(track => track.stop()); // Stop the temporary stream
-                              scanningPermissionUI.style.display = 'none';
-                              try {
-                                  sceneEl.systems['mindar-image-system'].start(); // Start MindAR
-                                      sceneEl.addEventListener('arError', (event) => {
-                                      console.error("MindAR Error:", event.detail);
-                                      let message = "An AR error occurred.";
-                                      if (event.detail.error === 'IMAGE_TARGETS_NOT_FOUND') {
-                                          message = "Could not load image targets. Please check the path to your .mind file.";
-                                      } else if (event.detail.error === 'WEBCAM_UNAVAILABLE') {
-                                          message = "Webcam is unavailable. Please ensure it's not in use by another application and you've granted permissions.";
-                                      }
-                                      showMessage(message);
-                                      // Show scanning UI again with error
-                                      scanningPermissionUI.style.display = 'flex';
-                                      scanningPermissionUI.querySelector('p').textContent = message + " Please try again or check console for details.";
-                                      startButton.textContent = "Try Again";
-                                      startButton.onclick = () => window.location.reload();
-                                  });
-                                  console.log("AR Scanning Started by user.");
-                              } catch (error) {
-                                  console.error("Failed to start MindAR system:", error);
-                                  showMessage("Failed to start AR. Please refresh the page and try again.");
-                              }
-                          })
-                          .catch((err) => {
-                              console.error("Camera permission denied or error:", err);
-                              showMessage("Camera access is required for AR. Please enable camera permissions and refresh.");
-                              scanningPermissionUI.querySelector('p').textContent = "Camera access denied. Please enable camera permissions in your browser settings and refresh the page.";
-                              startButton.textContent = "Refresh Page";
-                              startButton.onclick = () => window.location.reload();
-                          });
-                  } else {
-                      showMessage("Your browser does not support camera access (getUserMedia).");
-                      scanningPermissionUI.querySelector('p').textContent = "Your browser doesn't support the necessary features for AR.";
-                      startButton.style.display = 'none';
-                  }
-              });
-
-            // --- Initial Setup ---
-            if (foodItems.length > 0) {
-                updateDishDisplay(true); // Load the first dish data (model will be hidden until marker found)
-            } else {
-                dishNameEl.textContent = "No dishes available";
-                dishDescriptionEl.textContent = "";
-                showMessage("No food items are configured in the menu.");
-            }
-
-            // A-Frame scene loaded event (optional, for debugging or other setup)
-            sceneEl.addEventListener('loaded', () => {
-                console.log('A-Frame scene and MindAR system loaded.');
-            });
-
-             // Handle AR System errors
-            sceneEl.addEventListener('arError', (event) => {
-                console.error("MindAR Error:", event.detail);
-                let message = "An AR error occurred.";
-                if (event.detail.error === 'IMAGE_TARGETS_NOT_FOUND') {
-                    message = "Could not load image targets. Please check the path to your .mind file.";
-                } else if (event.detail.error === 'WEBCAM_UNAVAILABLE') {
-                    message = "Webcam is unavailable. Please ensure it's not in use by another application and you've granted permissions.";
-                }
-                showMessage(message);
-                // Show scanning UI again with error
-                scanningPermissionUI.style.display = 'flex';
-                scanningPermissionUI.querySelector('p').textContent = message + " Please try again or check console for details.";
-                startButton.textContent = "Try Again";
-                startButton.onclick = () => window.location.reload();
-            });
-
-        });
-    </script>
-</body>
-</html>
+          showMessage(message);
+          // Show scanning UI again with error
+          scanningPermissionUI.style.display = 'flex';
+          scanningPermissionUI.querySelector('p').textContent = message + " Please try again or check the browser console for more details.";
+          startButton.textContent = "Try Again";
+          startButton.onclick = () => window.location.reload(); // Simplest recovery
+          startButton.disabled = false;
+          startButton.style.backgroundColor = '#fff';
+      });
+  });
+</script>
