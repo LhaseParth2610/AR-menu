@@ -1,89 +1,470 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>AR Menu - Carousel</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
-    <style>
-      body, html {
-        margin: 0;
-        overflow: hidden;
-      }
-      .carousel-controls {
-        position: fixed;
-        bottom: 20px;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        z-index: 10;
-      }
-      .carousel-controls button {
-        padding: 10px 20px;
-        font-size: 16px;
-        background-color: #333;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-      }
-      .carousel-controls button:hover {
-        background-color: #555;
-      }
-    </style>
-  </head>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AR Restaurant Menu</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
-  <body>
-    <!-- Carousel Controls -->
-    <div class="carousel-controls">
-      <button id="prevButton">Previous</button>
-      <button id="nextButton">Next</button>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            overflow: hidden; /* Prevent scrollbars */
+            background-color: #000; /* Fallback background */
+        }
+
+        /* UI Container for controls and info */
+        #ui-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            box-sizing: border-box;
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0) 100%);
+            color: white;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .hidden-ui {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #dish-info {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        #dish-name {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        }
+
+        #dish-description {
+            font-size: 0.9em;
+            max-width: 90%;
+            margin: 0 auto;
+            color: #f0f0f0;
+        }
+
+        #navigation-controls {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            max-width: 350px; /* Limit width of nav controls */
+        }
+
+        .nav-button {
+            background-color: #ffffff;
+            color: #333333;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px; /* More rounded buttons */
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        .nav-button:active {
+            transform: scale(0.95);
+            background-color: #e0e0e0;
+        }
+
+        #loading-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 100;
+            display: none; /* Hidden by default */
+            font-size: 1.2em;
+        }
+
+        /* Styling for the A-Frame scene to ensure it takes up the whole screen */
+        a-scene {
+            width: 100%;
+            height: 100%;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* Message Box for alerts */
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200; /* Ensure it's on top of everything */
+        }
+        .message-box-content {
+            background-color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            max-width: 80%;
+        }
+        .message-box-content p {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+        .message-box-content button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-indicator">Loading 3D Model...</div>
+
+    <div id="ui-container" class="hidden-ui">
+        <div id="dish-info">
+            <h2 id="dish-name">Dish Name</h2>
+            <p id="dish-description">Dish description will appear here.</p>
+        </div>
+        <div id="navigation-controls">
+            <button id="prevButton" class="nav-button">❮ Prev</button>
+            <button id="nextButton" class="nav-button">Next ❯</button>
+        </div>
     </div>
 
-    <a-scene embedded arjs>
-      <!-- Preload models -->
-      <a-assets>
-        <a-asset-item id="pizzaModel" src="assets/pizza.glb"></a-asset-item>
-        <a-asset-item id="burgerModel" src="assets/burger.glb"></a-asset-item>
-        <!-- <a-asset-item id="pastaModel" src="assets/pasta.glb"></a-asset-item> -->
-      </a-assets>
+    <!--
+        IMPORTANT: Replace "path/to/your/targets.mind" with the actual path to your compiled image targets file.
+        You can create this file using the MindAR online compiler: https://hiukim.github.io/mind-ar-js-doc/tools/compile-image-targets
+    -->
+    <a-scene id="ar-scene" mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind; autoStart: false; uiScanning: #scanningPermission;"
+             color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
 
-      <!-- Marker -->
-      <a-marker type="pattern" url="assets/marker.patt">
-        <a-entity
-          id="modelViewer"
-          gltf-model="#pizzaModel"
-          scale="0.5 0.5 0.5"
-          position="0 0 0"
-          rotation="0 0 0">
+        <a-camera position="0 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
+
+        <a-assets timeout="30000">
+            <!--
+                IMPORTANT: Replace these with your actual .glb models.
+                Get free GLB models from sites like Sketchfab (ensure proper licensing) or create your own.
+                For testing, you can search for "food glb model" on Sketchfab.
+                Example: A simple cube as a placeholder.
+            -->
+            <a-asset-item id="dish1Model" src="assets/burger.glb"></a-asset-item>
+            <a-asset-item id="dish2Model" src="assets/pizza.glb"></a-asset-item>
+            <a-asset-item id="dish3Model" src="assets/desert.glb"></a-asset-item>
+            </a-assets>
+
+        <a-entity id="marker" mindar-image-target="targetIndex: 0">
+            <a-gltf-model id="currentDishModel" src="#dish1Model" position="0 0 0" scale="0.1 0.1 0.1" rotation="0 0 0" visible="false" animation-mixer>
+            </a-gltf-model>
         </a-entity>
-      </a-marker>
-
-      <!-- Camera -->
-      <a-entity camera></a-entity>
     </a-scene>
 
+    <div id="scanningPermission" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); color: white; z-index: 20; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+        <h2 style="margin-bottom: 10px;">AR Menu Experience</h2>
+        <img src="https://cdn.glitch.global/641a7d0a-0621-410c-983e-519f16990057/qr-scan-icon.svg?v=1716820084894" alt="Scan Icon" style="width: 80px; height: 80px; margin-bottom: 20px;">
+        <p style="margin-bottom: 20px; font-size: 1.1em; max-width: 80%;">Point your camera at the table marker to begin.</p>
+        <button id="startButton" style="padding: 12px 25px; font-size: 1.1em; color: #333; background-color: #fff; border: none; border-radius: 25px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">Start Scanning</button>
+    </div>
+
+
     <script>
-      // List of models
-      const models = ["#pizzaModel", "#burgerModel"];
-      let currentIndex = 0; // Track the current model index
+        document.addEventListener('DOMContentLoaded', () => {
+            const sceneEl = document.getElementById('ar-scene');
+            const currentDishModelEl = document.getElementById('currentDishModel');
+            const dishNameEl = document.getElementById('dish-name');
+            const dishDescriptionEl = document.getElementById('dish-description');
+            const prevButton = document.getElementById('prevButton');
+            const nextButton = document.getElementById('nextButton');
+            const uiContainer = document.getElementById('ui-container');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const markerEntity = document.getElementById('marker');
 
-      // Function to update the model
-      function updateModel() {
-        const modelViewer = document.getElementById("modelViewer");
-        modelViewer.setAttribute("gltf-model", models[currentIndex]);
-      }
+            const scanningPermissionUI = document.getElementById('scanningPermission');
+            const startButton = document.getElementById('startButton');
 
-      // Event listeners for carousel controls
-      document.getElementById("prevButton").addEventListener("click", () => {
-        currentIndex = (currentIndex - 1 + models.length) % models.length; // Go to the previous model
-        updateModel();
-      });
 
-      document.getElementById("nextButton").addEventListener("click", () => {
-        currentIndex = (currentIndex + 1) % models.length; // Go to the next model
-        updateModel();
-      });
+            // --- Food Item Data ---
+            // IMPORTANT:
+            // 1. Replace 'modelSrc' with the IDs of your <a-asset-item>s.
+            // 2. Adjust 'scale' and 'rotation' for each model as needed.
+            // 3. Add your dish names and descriptions.
+            const foodItems = [
+                {
+                    id: 'burger',
+                    name: 'Classic Burger',
+                    description: 'A delicious flame-grilled beef patty with fresh lettuce, tomato, and our special sauce.',
+                    modelSrc: '#dish1Model',
+                    scale: '0.3 0.3 0.3', // Example scale, adjust per model
+                    rotation: '0 0 0'
+                },
+                {
+                    id: 'pizza',
+                    name: 'Pepperoni Pizza',
+                    description: 'Authentic Italian pizza topped with spicy pepperoni and mozzarella cheese.',
+                    modelSrc: '#dish2Model',
+                    scale: '0.008 0.008 0.008', // Example scale
+                    rotation: '0 0 0'
+                },
+                {
+                    id: 'sushi',
+                    name: 'Sushi Platter',
+                    description: 'A fresh selection of salmon, tuna, and avocado sushi rolls.',
+                    modelSrc: '#dish3Model',
+                    scale: '0.2 0.2 0.2', // Example scale
+                    rotation: '0 0 0'
+                },
+                // Add more food items here
+            ];
+            let currentIndex = 0;
+            let markerCurrentlyVisible = false; // Tracks if the marker is currently detected
+
+            // --- Utility for Custom Alert ---
+            function showMessage(message) {
+                // Remove existing message box if any
+                const existingMessageBox = document.querySelector('.message-box-overlay');
+                if (existingMessageBox) {
+                    existingMessageBox.remove();
+                }
+
+                const overlay = document.createElement('div');
+                overlay.className = 'message-box-overlay';
+                const content = document.createElement('div');
+                content.className = 'message-box-content';
+                const text = document.createElement('p');
+                text.textContent = message;
+                const closeButton = document.createElement('button');
+                closeButton.textContent = 'OK';
+                closeButton.onclick = () => overlay.remove();
+
+                content.appendChild(text);
+                content.appendChild(closeButton);
+                overlay.appendChild(content);
+                document.body.appendChild(overlay);
+            }
+
+
+            // --- Function to Update Dish Display ---
+            const updateDishDisplay = (isInitialLoad = false) => {
+                if (foodItems.length === 0) {
+                    dishNameEl.textContent = "No dishes available";
+                    dishDescriptionEl.textContent = "";
+                    currentDishModelEl.setAttribute('visible', 'false');
+                    return;
+                }
+
+                // Handle array boundaries
+                if (currentIndex < 0) currentIndex = foodItems.length - 1;
+                if (currentIndex >= foodItems.length) currentIndex = 0;
+
+                const item = foodItems[currentIndex];
+
+                dishNameEl.textContent = item.name;
+                dishDescriptionEl.textContent = item.description;
+
+                // Show loading indicator only if the marker is visible or it's not the initial setup for a hidden model
+                if (markerCurrentlyVisible || !isInitialLoad) {
+                    loadingIndicator.style.display = 'block';
+                    currentDishModelEl.setAttribute('visible', 'false'); // Hide old model while new one loads
+                }
+
+
+                // Set new model source
+                currentDishModelEl.setAttribute('gltf-model', item.modelSrc);
+                currentDishModelEl.setAttribute('scale', item.scale);
+                currentDishModelEl.setAttribute('rotation', item.rotation);
+
+                // Animation reset (important for models with animations)
+                currentDishModelEl.removeAttribute('animation-mixer');
+                setTimeout(() => { // Re-add after a tick to ensure reset
+                    currentDishModelEl.setAttribute('animation-mixer', '');
+                }, 0);
+
+
+                // Event listener for when the model is loaded
+                // Using a flag to avoid multiple listeners if user swipes quickly
+                let modelLoadedListenerAttached = false;
+                const onModelLoaded = () => {
+                    loadingIndicator.style.display = 'none';
+                    if (markerCurrentlyVisible) {
+                        currentDishModelEl.setAttribute('visible', 'true');
+                    }
+                    currentDishModelEl.removeEventListener('model-loaded', onModelLoaded);
+                    modelLoadedListenerAttached = false;
+                };
+
+                // Check if the model is already cached/loaded by A-Frame's asset system
+                const assetItem = document.querySelector(item.modelSrc);
+                if (assetItem && assetItem.hasLoaded) {
+                     // If asset is loaded, we might not get 'model-loaded' event consistently
+                     // or it might fire too quickly. So, we manually trigger the logic.
+                    loadingIndicator.style.display = 'none';
+                    if (markerCurrentlyVisible) {
+                        currentDishModelEl.setAttribute('visible', 'true');
+                    }
+                } else if (!modelLoadedListenerAttached) {
+                    currentDishModelEl.addEventListener('model-loaded', onModelLoaded, { once: true });
+                    modelLoadedListenerAttached = true;
+                } else {
+                    // Fallback if event listener logic has issues, ensure loader hides and model shows if marker is visible
+                    setTimeout(() => {
+                        loadingIndicator.style.display = 'none';
+                        if (markerCurrentlyVisible) {
+                           currentDishModelEl.setAttribute('visible', 'true');
+                        }
+                    }, 500); // Small delay as a fallback
+                }
+            };
+
+            // --- MindAR Event Listeners ---
+            if (markerEntity) {
+                markerEntity.addEventListener('targetFound', event => {
+                    console.log("Marker Found!");
+                    markerCurrentlyVisible = true;
+                    uiContainer.classList.remove('hidden-ui');
+                    currentDishModelEl.setAttribute('visible', 'true');
+                    // Update display to ensure the correct model and its visibility are set
+                    updateDishDisplay();
+                });
+
+                markerEntity.addEventListener('targetLost', event => {
+                    console.log("Marker Lost!");
+                    markerCurrentlyVisible = false;
+                    uiContainer.classList.add('hidden-ui');
+                    currentDishModelEl.setAttribute('visible', 'false');
+                    loadingIndicator.style.display = 'none'; // Hide loader if marker is lost
+                });
+            } else {
+                showMessage("AR marker entity not found. Please check the HTML setup.");
+            }
+
+            // --- Navigation Button Event Listeners ---
+            prevButton.addEventListener('click', () => {
+                currentIndex--;
+                updateDishDisplay();
+            });
+
+            nextButton.addEventListener('click', () => {
+                currentIndex++;
+                updateDishDisplay();
+            });
+
+            // --- Swipe Gesture Detection ---
+            let touchstartX = 0;
+            let touchendX = 0;
+            const swipeThreshold = 50; // Minimum pixels to be considered a swipe
+
+            // Use the document body for swipe, or a specific swipeable area if preferred
+            document.body.addEventListener('touchstart', (event) => {
+                // Only register swipe if UI is visible (marker is found)
+                if (!markerCurrentlyVisible || event.target.closest('.nav-button')) return;
+                touchstartX = event.changedTouches[0].screenX;
+            }, { passive: true });
+
+            document.body.addEventListener('touchend', (event) => {
+                if (!markerCurrentlyVisible || touchstartX === 0 || event.target.closest('.nav-button')) {
+                    touchstartX = 0; // Reset for next swipe
+                    return;
+                }
+                touchendX = event.changedTouches[0].screenX;
+                handleSwipe();
+                touchstartX = 0; // Reset for next swipe
+            }, { passive: true });
+
+            function handleSwipe() {
+                const swipeDistance = touchendX - touchstartX;
+                if (Math.abs(swipeDistance) < swipeThreshold) return; // Not a significant swipe
+
+                if (swipeDistance < 0) { // Swiped left (next item)
+                    currentIndex++;
+                } else { // Swiped right (previous item)
+                    currentIndex--;
+                }
+                updateDishDisplay();
+            }
+
+            // --- Start AR Scanning ---
+            startButton.addEventListener('click', () => {
+                // Check for camera permissions first (basic check)
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    navigator.mediaDevices.getUserMedia({ video: true })
+                        .then((stream) => {
+                            stream.getTracks().forEach(track => track.stop()); // Stop the temporary stream
+                            scanningPermissionUI.style.display = 'none';
+                            sceneEl.emit('startar'); // Custom event to potentially trigger AR start if needed
+                            sceneEl.systems['mindar-image-system'].start(); // Start MindAR
+                            console.log("AR Scanning Started by user.");
+                        })
+                        .catch((err) => {
+                            console.error("Camera permission denied or error:", err);
+                            showMessage("Camera access is required for AR. Please enable camera permissions and refresh.");
+                            scanningPermissionUI.querySelector('p').textContent = "Camera access denied. Please enable camera permissions in your browser settings and refresh the page.";
+                            startButton.textContent = "Refresh Page";
+                            startButton.onclick = () => window.location.reload();
+                        });
+                } else {
+                    showMessage("Your browser does not support camera access (getUserMedia).");
+                    scanningPermissionUI.querySelector('p').textContent = "Your browser doesn't support the necessary features for AR.";
+                    startButton.style.display = 'none';
+                }
+            });
+
+
+            // --- Initial Setup ---
+            if (foodItems.length > 0) {
+                updateDishDisplay(true); // Load the first dish data (model will be hidden until marker found)
+            } else {
+                dishNameEl.textContent = "No dishes available";
+                dishDescriptionEl.textContent = "";
+                showMessage("No food items are configured in the menu.");
+            }
+
+            // A-Frame scene loaded event (optional, for debugging or other setup)
+            sceneEl.addEventListener('loaded', () => {
+                console.log('A-Frame scene and MindAR system loaded.');
+            });
+
+             // Handle AR System errors
+            sceneEl.addEventListener('arError', (event) => {
+                console.error("MindAR Error:", event.detail);
+                let message = "An AR error occurred.";
+                if (event.detail.error === 'IMAGE_TARGETS_NOT_FOUND') {
+                    message = "Could not load image targets. Please check the path to your .mind file.";
+                } else if (event.detail.error === 'WEBCAM_UNAVAILABLE') {
+                    message = "Webcam is unavailable. Please ensure it's not in use by another application and you've granted permissions.";
+                }
+                showMessage(message);
+                // Show scanning UI again with error
+                scanningPermissionUI.style.display = 'flex';
+                scanningPermissionUI.querySelector('p').textContent = message + " Please try again or check console for details.";
+                startButton.textContent = "Try Again";
+                startButton.onclick = () => window.location.reload();
+            });
+
+        });
     </script>
-  </body>
+</body>
 </html>
