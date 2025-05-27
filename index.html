@@ -29,13 +29,14 @@
     <a-scene embedded arjs>
       <!-- Assets -->
       <a-assets>
-        <a-asset-item id="pizzaModel" src="assets/pizza.glb"></a-asset-item>
-        <a-asset-item id="burgerModel" src="assets/burger.glb"></a-asset-item>
-        <a-asset-item id="desertModel" src="assets/desert.glb"></a-asset-item>
+        <a-asset-item id="pizzaModel"   src="/assets/pizza.glb"></a-asset-item>
+        <a-asset-item id="burgerModel"  src="/assets/burger.glb"></a-asset-item>
+        <a-asset-item id="desertModel"   src="/assets/desert.glb"></a-asset-item>
       </a-assets>
 
       <!-- NFT Marker -->
-      <a-nft type="nft" url="https://raw.githubusercontent.com/AR-js-org/AR.js/master/aframe/examples/image-tracking/nft/trex">
+      <!-- Replace '/geometric' with your marker base URL (without extension), e.g. '/geometric' or 'https://<your-domain>/geometric' -->
+      <a-nft type="nft" url="/markerimage">
         <a-entity
           id="modelViewer"
           gltf-model="#pizzaModel"
@@ -50,59 +51,42 @@
     </a-scene>
 
     <script>
-      // List of models
+      // List of models (IDs must match <a-asset-item> IDs)
       const models = [
         "#pizzaModel",
         "#burgerModel",
         "#desertModel"
       ];
 
-      let currentIndex = 0; // Track the current model index
+      let currentIndex = 0;
+      let isSwiping = false;
+      const SWIPE_THRESHOLD = 50;
+      let touchStartX = null;
 
-      // Function to update the model
       function updateModel(direction) {
-        // Update the index based on swipe direction
         if (direction === "left") {
-          currentIndex = (currentIndex + 1) % models.length; // Go to the next model
+          currentIndex = (currentIndex + 1) % models.length;
         } else if (direction === "right") {
-          currentIndex = (currentIndex - 1 + models.length) % models.length; // Go to the previous model
+          currentIndex = (currentIndex - 1 + models.length) % models.length;
         }
-
-        // Update the gltf-model attribute of the entity
         const modelViewer = document.getElementById("modelViewer");
         modelViewer.setAttribute("gltf-model", models[currentIndex]);
       }
 
-      // Detect swipe gestures
-      let touchStartX = null;
-      const SWIPE_THRESHOLD = 50; // Minimum distance for a swipe to be registered
-      let isSwiping = false; // Prevent multiple rapid swipes
-
-      window.addEventListener("touchstart", (event) => {
-        touchStartX = event.touches[0].clientX;
+      window.addEventListener("touchstart", (e) => {
+        touchStartX = e.touches[0].clientX;
       });
 
-      window.addEventListener("touchend", (event) => {
+      window.addEventListener("touchend", (e) => {
         if (touchStartX === null || isSwiping) return;
-
-        const touchEndX = event.changedTouches[0].clientX;
+        const touchEndX = e.changedTouches[0].clientX;
         const deltaX = touchEndX - touchStartX;
-
         if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
-          isSwiping = true; // Block further swipes temporarily
-          if (deltaX > 0) {
-            updateModel("right"); // Swipe right
-          } else {
-            updateModel("left"); // Swipe left
-          }
-
-          // Allow swiping again after a short delay
-          setTimeout(() => {
-            isSwiping = false;
-          }, 300);
+          isSwiping = true;
+          if (deltaX > 0) updateModel("right"); else updateModel("left");
+          setTimeout(() => { isSwiping = false; }, 300);
         }
-
-        touchStartX = null; // Reset touch start position
+        touchStartX = null;
       });
     </script>
   </body>
