@@ -1,123 +1,40 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>AR Menu - Swipe Models</title>
+    <title>AR Menu - Pizza</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
     <style>
-      body, html {
-        margin: 0;
-        overflow: hidden;
-      }
-      .swipe-hint {
-        position: fixed;
-        bottom: 20px;
-        width: 100%;
-        text-align: center;
-        color: white;
-        font-size: 18px;
-        background: rgba(0, 0, 0, 0.5);
-        padding: 10px;
-        z-index: 10;
-      }
+      body, html { margin: 0; overflow: hidden; }
     </style>
   </head>
 
   <body>
-    <!-- Swipe hint -->
-    <div class="swipe-hint">Swipe left or right to change the model</div>
+    <a-scene embedded arjs>
+      <!-- Marker for triggering the AR model -->
+        <a-assets>
+            <a-asset-item id="pizzaModel" src="assets/pizza.glb"></a-asset-item>
+            <a-asset-item id="burgerModel" src="assets/burger.glb"></a-asset-item>
+        </a-assets>
 
-    <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'>
-      <!-- Preload models -->
-      <a-assets>
-        <a-asset-item id="pizzaModel" src="assets/pizza.glb"></a-asset-item>
-        <a-asset-item id="burgerModel" src="assets/burger.glb"></a-asset-item>
-        <a-asset-item id="desertModel" src="assets/desert.glb"></a-asset-item>
-      </a-assets>
+        <a-marker type="pattern" url="assets/marker.patt">
+            <!-- <a-entity 
+            gltf-model="#pizzaModel"
+            scale="0.5 0.5 0.5"
+            position="0 0 0"
+            rotation="0 0 0"
+            ></a-entity> -->
+            <a-entity 
+            gltf-model="#burgerModel"
+            scale="0.5 0.5 0.5"
+            position="0 0 0"
+            rotation="0 0 0"
+            ></a-entity>
+        </a-marker>
 
-      <!-- Hiro Marker -->
-      <a-marker preset="hiro">
-        <!-- adjusted the scale for better visibility -->
-        <a-entity
-        id="modelViewer"
-        gltf-model="#pizzaModel"
-          scale="0.3 0.3 0.3"  
-          position="0 0 0"
-          rotation="0 0 0"
-          visible="false"
-          animation="property: opacity; from: 0; to: 1; dur: 500; startEvents: fadeIn">
-        </a-entity>
-      </a-marker>
 
-      <!-- Camera -->
+      <!-- Camera for AR -->
       <a-entity camera></a-entity>
     </a-scene>
-
-    <script>
-      const models = ["#pizzaModel", "#burgerModel", "#desertModel"];
-      let currentIndex = 0;
-
-      document.addEventListener("DOMContentLoaded", () => {
-        const scene = document.querySelector("a-scene");
-        const modelViewer = document.getElementById("modelViewer");
-
-        scene.addEventListener("markerFound", () => {
-          modelViewer.setAttribute("visible", "true");  // Show immediately
-          modelViewer.emit("fadeIn");
-        });
-
-        scene.addEventListener("markerLost", () => {
-          modelViewer.setAttribute("visible", "false");
-        });
-      });
-
-      function updateModel(direction) {
-        const modelViewer = document.getElementById("modelViewer");
-
-        modelViewer.setAttribute("visible", "false");
-
-        setTimeout(() => {
-          if (direction === "left") {
-            currentIndex = (currentIndex + 1) % models.length;
-          } else if (direction === "right") {
-            currentIndex = (currentIndex - 1 + models.length) % models.length;
-          }
-
-          modelViewer.setAttribute("gltf-model", models[currentIndex]);
-          modelViewer.setAttribute("visible", "true");
-          modelViewer.emit("fadeIn");
-        }, 300);
-      }
-
-      let touchStartX = null;
-      const SWIPE_THRESHOLD = 50;
-      let isSwiping = false;
-
-      window.addEventListener("touchstart", (event) => {
-        touchStartX = event.touches[0].clientX;
-      });
-
-      window.addEventListener("touchend", (event) => {
-        if (touchStartX === null || isSwiping) return;
-
-        const touchEndX = event.changedTouches[0].clientX;
-        const deltaX = touchEndX - touchStartX;
-
-        if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
-          isSwiping = true;
-          if (deltaX > 0) {
-            updateModel("right");
-          } else {
-            updateModel("left");
-          }
-
-          setTimeout(() => {
-            isSwiping = false;
-          }, 300);
-        }
-
-        touchStartX = null;
-      });
-    </script>
   </body>
 </html>
