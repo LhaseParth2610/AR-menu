@@ -415,6 +415,21 @@
                               scanningPermissionUI.style.display = 'none';
                               try {
                                   sceneEl.systems['mindar-image-system'].start(); // Start MindAR
+                                      sceneEl.addEventListener('arError', (event) => {
+                                      console.error("MindAR Error:", event.detail);
+                                      let message = "An AR error occurred.";
+                                      if (event.detail.error === 'IMAGE_TARGETS_NOT_FOUND') {
+                                          message = "Could not load image targets. Please check the path to your .mind file.";
+                                      } else if (event.detail.error === 'WEBCAM_UNAVAILABLE') {
+                                          message = "Webcam is unavailable. Please ensure it's not in use by another application and you've granted permissions.";
+                                      }
+                                      showMessage(message);
+                                      // Show scanning UI again with error
+                                      scanningPermissionUI.style.display = 'flex';
+                                      scanningPermissionUI.querySelector('p').textContent = message + " Please try again or check console for details.";
+                                      startButton.textContent = "Try Again";
+                                      startButton.onclick = () => window.location.reload();
+                                  });
                                   console.log("AR Scanning Started by user.");
                               } catch (error) {
                                   console.error("Failed to start MindAR system:", error);
