@@ -27,7 +27,7 @@
     <!-- Swipe hint -->
     <div class="swipe-hint">Swipe left or right to change the model</div>
 
-    <a-scene embedded arjs>
+    <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'>
       <!-- Preload models -->
       <a-assets>
         <a-asset-item id="pizzaModel" src="assets/pizza.glb"></a-asset-item>
@@ -37,12 +37,15 @@
 
       <!-- Hiro Marker -->
       <a-marker preset="hiro">
+        <!-- adjusted the scale for better visibility -->
         <a-entity
-          id="modelViewer"
-          gltf-model="#pizzaModel"
-          scale="0.5 0.5 0.5"
+        id="modelViewer"
+        gltf-model="#pizzaModel"
+          scale="0.3 0.3 0.3"  
           position="0 0 0"
-          rotation="0 0 0">
+          rotation="0 0 0"
+          visible="false"
+          animation="property: opacity; from: 0; to: 1; dur: 500; startEvents: fadeIn">
         </a-entity>
       </a-marker>
 
@@ -51,37 +54,44 @@
     </a-scene>
 
     <script>
-      // List of models
       const models = ["#pizzaModel", "#burgerModel", "#desertModel"];
-      let currentIndex = 0; // Track the current model index
+      let currentIndex = 0;
 
-      // Function to update the model
+      document.addEventListener("DOMContentLoaded", () => {
+        const scene = document.querySelector("a-scene");
+        const modelViewer = document.getElementById("modelViewer");
+
+        scene.addEventListener("markerFound", () => {
+          modelViewer.setAttribute("visible", "true");  // Show immediately
+          modelViewer.emit("fadeIn");
+        });
+
+        scene.addEventListener("markerLost", () => {
+          modelViewer.setAttribute("visible", "false");
+        });
+      });
+
       function updateModel(direction) {
         const modelViewer = document.getElementById("modelViewer");
 
-        // Fade out the current model
         modelViewer.setAttribute("visible", "false");
 
         setTimeout(() => {
-          // Update the index based on swipe direction
           if (direction === "left") {
-            currentIndex = (currentIndex + 1) % models.length; // Go to the next model
+            currentIndex = (currentIndex + 1) % models.length;
           } else if (direction === "right") {
-            currentIndex = (currentIndex - 1 + models.length) % models.length; // Go to the previous model
+            currentIndex = (currentIndex - 1 + models.length) % models.length;
           }
 
-          // Update the gltf-model attribute of the entity
           modelViewer.setAttribute("gltf-model", models[currentIndex]);
-
-          // Fade in the new model
           modelViewer.setAttribute("visible", "true");
-        }, 300); // Delay for fade-out effect
+          modelViewer.emit("fadeIn");
+        }, 300);
       }
 
-      // Detect swipe gestures
       let touchStartX = null;
-      const SWIPE_THRESHOLD = 50; // Minimum distance for a swipe to be registered
-      let isSwiping = false; // Prevent multiple rapid swipes
+      const SWIPE_THRESHOLD = 50;
+      let isSwiping = false;
 
       window.addEventListener("touchstart", (event) => {
         touchStartX = event.touches[0].clientX;
@@ -94,20 +104,19 @@
         const deltaX = touchEndX - touchStartX;
 
         if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
-          isSwiping = true; // Block further swipes temporarily
+          isSwiping = true;
           if (deltaX > 0) {
-            updateModel("right"); // Swipe right
+            updateModel("right");
           } else {
-            updateModel("left"); // Swipe left
+            updateModel("left");
           }
 
-          // Allow swiping again after a short delay
           setTimeout(() => {
             isSwiping = false;
           }, 300);
         }
 
-        touchStartX = null; // Reset touch start position
+        touchStartX = null;
       });
     </script>
   </body>
