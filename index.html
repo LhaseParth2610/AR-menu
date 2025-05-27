@@ -33,11 +33,10 @@
         <a-asset-item id="pizzaModel" src="assets/pizza.glb"></a-asset-item>
         <a-asset-item id="burgerModel" src="assets/burger.glb"></a-asset-item>
         <a-asset-item id="desertModel" src="assets/desert.glb"></a-asset-item>
-
       </a-assets>
 
-      <!-- Marker -->
-      <a-marker type="pattern" url="assets/marker.patt">
+      <!-- Hiro Marker -->
+      <a-marker preset="hiro">
         <a-entity
           id="modelViewer"
           gltf-model="#pizzaModel"
@@ -53,7 +52,7 @@
 
     <script>
       // List of models
-      const models = ["#pizzaModel", "#burgerModel","desertModel"];
+      const models = ["#pizzaModel", "#burgerModel", "#desertModel"];
       let currentIndex = 0; // Track the current model index
 
       // Function to update the model
