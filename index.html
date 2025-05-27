@@ -1,188 +1,123 @@
-<!-- Session Initialization:
-
-A WebXR session is started using navigator.xr.requestSession().
-The session can be of type immersive-ar (for AR) or immersive-vr (for VR).
-Reference Spaces:
-
-WebXR uses "reference spaces" to define the coordinate system for the AR/VR environment.
-Common reference spaces:
-viewer: Tracks the user's head or device position.
-local-floor: Tracks the user's position relative to the floor.
-Hit Testing:
-
-Hit testing is used to detect real-world surfaces.
-A hit test source is created using session.requestHitTestSource().
-During each frame, frame.getHitTestResults() is used to check for intersections between the real-world surfaces and the virtual objects.
-Rendering:
-
-WebXR provides a setAnimationLoop() method to render frames continuously during the session.
-2. What is Three.js?
-Three.js is a JavaScript library that simplifies 3D rendering in the browser. It abstracts the complexities of WebGL, making it easier to create 3D scenes, objects, and animations.
-
-Key Features of Three.js
-Scene Graph: Three.js uses a scene graph to manage 3D objects, lights, and cameras.
-Geometry and Materials: It provides built-in geometries (e.g., cubes, spheres) and materials (e.g., basic, phong) for creating 3D objects.
-WebXR Integration: Three.js has built-in support for WebXR, making it easier to create AR/VR experiences. -->
-
-
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <title>Zero-Button WebXR AR Menu</title>
-  <!-- Three.js & helpers -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/webxr/ARButton.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/loaders/GLTFLoader.js"></script>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: sans-serif;
-    }
-    #launcher {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: black;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-      cursor: pointer;
-    }
-    #ui {
-      position: fixed;
-      bottom: 20px;
-      width: 100%;
-      text-align: center;
-      color: white;
-      pointer-events: none;
-    }
-  </style>
-</head>
-<body>
-  <!-- 1) Big AR-launch overlay -->
-  <div id="launcher">
-    Tap to allow camera & enter AR
-  </div>
-
-  <!-- 2) Your on-screen swipe/UI hints -->
-  <div id="ui">
-    <span id="hint">Swipe to change dish</span>
-  </div>
-
-  <script>
-    let scene, camera, renderer, reticle, models = ["dish1.glb", "dish2.glb"], idx = 0, current;
-    const loader = new THREE.GLTFLoader();
-
-    // 3) Set up Three.js scene
-    function initScene() {
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera();
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.xr.enabled = true;
-      document.body.appendChild(renderer.domElement);
-
-      // Reticle for placement
-      const geo = new THREE.RingGeometry(0.1, 0.15, 32).rotateX(-Math.PI / 2);
-      const mat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-      reticle = new THREE.Mesh(geo, mat);
-      reticle.visible = false;
-      scene.add(reticle);
-    }
-
-    // 4) Start AR session on user gesture
-    document.getElementById('launcher').addEventListener('click', async () => {
-      try {
-        // Show an alert to register the user gesture
-        alert("Camera access is required to enter AR. Tap OK to continue.");
-
-        // Hide the launcher overlay
-        document.getElementById('launcher').style.display = 'none';
-
-        // Initialize the scene
-        initScene();
-
-        // Add the standardized ARButton—but hide it (we’re already in XR)
-        const arButton = ARButton.createButton(renderer, {
-          requiredFeatures: ['hit-test']
-        });
-        document.body.appendChild(arButton);
-        arButton.style.display = 'none';
-
-        // Start the XR session
-        await renderer.xr.setSession(await navigator.xr.requestSession('immersive-ar', {
-          requiredFeatures: ['hit-test']
-        }));
-
-        // Load the first model
-        loader.load(`models/${models[idx]}`, gltf => {
-          current = gltf.scene;
-          current.scale.set(0.5, 0.5, 0.5);
-        });
-
-        // Hit-test setup
-        const session = renderer.xr.getSession();
-        const viewerSpace = await session.requestReferenceSpace('viewer');
-        const hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
-        const refSpace = await session.requestReferenceSpace('local-floor');
-
-        // Render loop
-        renderer.setAnimationLoop((_, frame) => {
-          if (frame) {
-            const hits = frame.getHitTestResults(hitTestSource);
-            if (hits.length) {
-              const pose = hits[0].getPose(refSpace);
-              reticle.visible = true;
-              reticle.position.set(pose.transform.position.x,
-                                   pose.transform.position.y,
-                                   pose.transform.position.z);
-
-              // Auto-place model on first detection
-              if (current && !current.parent) {
-                current.position.copy(reticle.position);
-                scene.add(current);
-              }
-            }
-          }
-          renderer.render(scene, camera);
-        });
-      } catch (error) {
-        console.error("Failed to start AR session:", error);
-        alert("AR session could not be started. Please ensure your device supports WebXR.");
+  <head>
+    <title>AR Menu - Swipe Models</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
+    <style>
+      body, html {
+        margin: 0;
+        overflow: hidden;
       }
-    });
-
-    // 5) Swipe to change dish
-    let touchStartX = null;
-    window.addEventListener('touchstart', e => {
-      touchStartX = e.touches[0].clientX;
-    });
-    window.addEventListener('touchend', e => {
-      if (touchStartX === null) return;
-      const dx = e.changedTouches[0].clientX - touchStartX;
-      if (Math.abs(dx) > 50) {
-        // Remove old model
-        if (current && current.parent) scene.remove(current);
-        // Pick next
-        idx = (idx + 1) % models.length;
-        loader.load(`models/${models[idx]}`, gltf => {
-          current = gltf.scene;
-          current.scale.set(0.5, 0.5, 0.5);
-          // Place at existing reticle location
-          if (reticle.visible) {
-            current.position.copy(reticle.position);
-            scene.add(current);
-          }
-        });
+      .swipe-hint {
+        position: fixed;
+        bottom: 20px;
+        width: 100%;
+        text-align: center;
+        color: white;
+        font-size: 18px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        z-index: 10;
       }
-      touchStartX = null;
-    });
-  </script>
-</body>
+    </style>
+  </head>
+
+  <body>
+    <!-- Swipe hint -->
+    <div class="swipe-hint">Swipe left or right to change the model</div>
+
+    <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'>
+      <!-- Preload models -->
+      <a-assets>
+        <a-asset-item id="pizzaModel" src="assets/pizza.glb"></a-asset-item>
+        <a-asset-item id="burgerModel" src="assets/burger.glb"></a-asset-item>
+        <a-asset-item id="desertModel" src="assets/desert.glb"></a-asset-item>
+      </a-assets>
+
+      <!-- Hiro Marker -->
+      <a-marker preset="hiro">
+        <!-- adjusted the scale for better visibility -->
+        <a-entity
+        id="modelViewer"
+        gltf-model="#pizzaModel"
+          scale="0.3 0.3 0.3"  
+          position="0 0 0"
+          rotation="0 0 0"
+          visible="false"
+          animation="property: opacity; from: 0; to: 1; dur: 500; startEvents: fadeIn">
+        </a-entity>
+      </a-marker>
+
+      <!-- Camera -->
+      <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+      const models = ["#pizzaModel", "#burgerModel", "#desertModel"];
+      let currentIndex = 0;
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const scene = document.querySelector("a-scene");
+        const modelViewer = document.getElementById("modelViewer");
+
+        scene.addEventListener("markerFound", () => {
+          modelViewer.setAttribute("visible", "true");  // Show immediately
+          modelViewer.emit("fadeIn");
+        });
+
+        scene.addEventListener("markerLost", () => {
+          modelViewer.setAttribute("visible", "false");
+        });
+      });
+
+      function updateModel(direction) {
+        const modelViewer = document.getElementById("modelViewer");
+
+        modelViewer.setAttribute("visible", "false");
+
+        setTimeout(() => {
+          if (direction === "left") {
+            currentIndex = (currentIndex + 1) % models.length;
+          } else if (direction === "right") {
+            currentIndex = (currentIndex - 1 + models.length) % models.length;
+          }
+
+          modelViewer.setAttribute("gltf-model", models[currentIndex]);
+          modelViewer.setAttribute("visible", "true");
+          modelViewer.emit("fadeIn");
+        }, 300);
+      }
+
+      let touchStartX = null;
+      const SWIPE_THRESHOLD = 50;
+      let isSwiping = false;
+
+      window.addEventListener("touchstart", (event) => {
+        touchStartX = event.touches[0].clientX;
+      });
+
+      window.addEventListener("touchend", (event) => {
+        if (touchStartX === null || isSwiping) return;
+
+        const touchEndX = event.changedTouches[0].clientX;
+        const deltaX = touchEndX - touchStartX;
+
+        if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
+          isSwiping = true;
+          if (deltaX > 0) {
+            updateModel("right");
+          } else {
+            updateModel("left");
+          }
+
+          setTimeout(() => {
+            isSwiping = false;
+          }, 300);
+        }
+
+        touchStartX = null;
+      });
+    </script>
+  </body>
 </html>
