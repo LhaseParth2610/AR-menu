@@ -24,8 +24,8 @@
     embedded
     arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
     vr-mode-ui="enabled: false"
-    renderer="logarithmicDepthBuffer: true;"
-  >
+    renderer="logarithmicDepthBuffer: true;">
+    
     <!-- Single HIRO marker for all dishes -->
     <a-marker preset="hiro">
 
@@ -48,6 +48,7 @@
 
     </a-marker>
 
+    <!-- Camera -->
     <a-entity camera></a-entity>
   </a-scene>
 
@@ -55,17 +56,21 @@
     // Define your menu items
     const menu = [
       { model: 'models/dish2.glb', label: 'Classic Cheeseburger\n₹299' },
-      { model: 'models/dish1.glb', label: 'Desert \n₹249' },
+      { model: 'models/dish1.glb', label: 'Dessert\n₹249' },
       // add more items here...
     ];
     let index = 0;
 
-    const dishEntity = document.querySelector('#dishModel');
+    const dishEntity  = document.querySelector('#dishModel');
     const labelEntity = document.querySelector('#dishLabel');
 
     // Function to load a GLB into the a-entity
     function loadDish(i) {
+      // remove previous mesh so the new model will load
+      dishEntity.removeObject3D('mesh');
+      // set the new model URL
       dishEntity.setAttribute('gltf-model', menu[i].model);
+      // update the text label
       labelEntity.setAttribute('value', menu[i].label);
     }
 
