@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Swipe-able AR Menu</title>
+  <title>Swipe-able AR Menu</title>\
+  <!-- A-Frame: A framework for building 3D and AR/VR experiences.
+       AR.js: A library for integrating AR functionality into A-Frame. -->
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.js"></script>
   <style>
@@ -55,7 +57,7 @@
   <script>
     // Define your menu items
     const menu = [
-      { model: 'models/dish2.glb', label: 'Classic Cheeseburger\n₹299' },
+      { model: 'models/dish3.glb', label: 'Classic Cheeseburger\n₹299' },
       { model: 'models/dish1.glb', label: 'Dessert\n₹249' },
       // add more items here...
     ];
@@ -82,15 +84,15 @@
     window.addEventListener('touchstart', e => {
       startX = e.touches[0].clientX;
     });
-    window.addEventListener('touchend', e => {
-      if (startX === null) return;
-      const dx = e.changedTouches[0].clientX - startX;
-      if (Math.abs(dx) > 50) {
+        window.addEventListener('touchend', e => {
+    if (startX === null) return; // If no touchstart was recorded, exit
+    const dx = e.changedTouches[0].clientX - startX; // Calculate swipe distance
+    if (Math.abs(dx) > 50) { // Check if swipe distance exceeds threshold
         // left swipe -> next, right swipe -> prev
         index = (index + (dx < 0 ? 1 : -1) + menu.length) % menu.length;
-        loadDish(index);
-      }
-      startX = null;
+        loadDish(index); // Load the new dish based on updated index
+    }
+    startX = null; // Reset startX for the next swipe
     });
   </script>
 </body>
