@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Swipe-able AR Menu (Better Scaling)</title>
+  <title>Swipe-able AR Menu (Polished)</title>
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.js"></script>
   <style>
@@ -12,86 +12,122 @@
       text-align:center; color:#fff;
       font-family:sans-serif; text-shadow:0 0 5px #000;
       z-index:1;
+      opacity:0.8;
     }
+    /* Simple fade-in animation */
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
   </style>
 </head>
 <body>
-  <div id="instructions">Swipe left/right to browse menu items.</div>
+  <div id="instructions">Swipe ←/→ to browse dishes</div>
+
   <a-scene embedded
            arjs="trackingMethod: best; sourceType: webcam;"
-           vr-mode-ui="enabled: false">
+           vr-mode-ui="enabled: false"
+           renderer="logarithmicDepthBuffer: true;">
+
     <a-marker preset="hiro">
-      <a-entity id="dishModel" position="0 0 0" rotation="0 0 0"></a-entity>
-      <a-text id="dishLabel" value=""
-              align="center" position="0 0.01 0"
-              rotation="-90 0 0" color="#FFD740" width="3">
+      <!-- Model -->
+      <a-entity id="dishModel"></a-entity>
+
+      <!-- Label background plate -->
+      <a-plane id="labelBg"
+               width="1" height="0.3"
+               color="#000" opacity="0.6"
+               position="0 0 0"
+               visible="false">
+      </a-plane>
+
+      <!-- Label text -->
+      <a-text id="dishLabel"
+              align="center"
+              color="#FFD740"
+              width="1.8"
+              position="0 0 0"
+              visible="false"
+              class="fade-in">
       </a-text>
     </a-marker>
+
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
     const menu = [
       { model: 'models/dish1.glb', label: 'Classic Cheeseburger\n₹299' },
-      { model: 'models/dish2.glb', label: 'Dessert\n₹249' },
-      { model: 'models/dish3.glb', label: 'Neapolitan Style Pizza\n₹749' },
-
-      // more items...
+      { model: 'models/dish2.glb', label: 'Chocolate Lava Cake\n₹249' },
+      { model: 'models/dish3.glb', label: 'Neapolitan Pizza\n₹749' },
     ];
     let index = 0;
+
     const dishEntity  = document.querySelector('#dishModel');
     const labelEntity = document.querySelector('#dishLabel');
+    const bgEntity    = document.querySelector('#labelBg');
 
     function loadDish(i) {
-      // update label immediately
-      labelEntity.setAttribute('value', menu[i].label);
+      // Hide until loaded
+      dishEntity.setAttribute('visible', 'false');
+      labelEntity.setAttribute('visible', 'false');
+      bgEntity.setAttribute('visible', 'false');
 
-      // clear old
+      // Remove old
       dishEntity.removeObject3D('mesh');
       dishEntity.removeAttribute('gltf-model');
       dishEntity.setAttribute('scale', '1 1 1');
       dishEntity.setAttribute('position', '0 0 0');
 
-      // load new
+      // Update label text
+      labelEntity.setAttribute('value', menu[i].label);
+
+      // Load new model
       dishEntity.setAttribute('gltf-model', menu[i].model);
       dishEntity.addEventListener('model-loaded', () => {
-    const mesh = dishEntity.getObject3D('mesh');
+        const mesh = dishEntity.getObject3D('mesh');
 
-    // 1) Center the mesh on the marker plane
-    const bbox = new THREE.Box3().setFromObject(mesh);
-    const center = bbox.getCenter(new THREE.Vector3());
-    mesh.position.sub(center);
+        // 1) Center geometry at origin
+        const bbox = new THREE.Box3().setFromObject(mesh);
+        const center = bbox.getCenter(new THREE.Vector3());
+        mesh.position.sub(center);
 
-    // 2) Compute scale so that the largest dimension = 0.5 m
-    const size = bbox.getSize(new THREE.Vector3());
-    const desiredMax = 0.5;
-    const actualMax  = Math.max(size.x, size.y, size.z);
-    const s = desiredMax / actualMax;
-    dishEntity.setAttribute('scale', `${s} ${s} ${s}`);
+        // 2) Compute scale so largest side ≤ 0.5m
+        const size = bbox.getSize(new THREE.Vector3());
+        const desiredMax = 0.5;
+        const actualMax  = Math.max(size.x, size.y, size.z);
+        const s = desiredMax / actualMax;
+        dishEntity.setAttribute('scale', `${s} ${s} ${s}`);
 
-    // 3) Compute the model’s half-height *after* scaling
-    const halfScaledHeight = (size.y * s) / 2;
+        // 3) Position model so base sits at Y=0
+        const halfHeight = (size.y * s) / 2;
+        dishEntity.setAttribute('position', `0 ${halfHeight} 0`);
 
-    // 4) Position the model so its base is at Y = 0
-    dishEntity.setAttribute('position', `0 ${halfScaledHeight} 0`);
+        // 4) Label sits slightly above top of model
+        const labelOffset = 0.05;
+        const labelY = halfHeight + (size.y * s) / 2 + labelOffset;
+        labelEntity.setAttribute('position', `0 ${labelY} 0`);
+        bgEntity.setAttribute('position', `0 ${labelY} 0.01`);
 
-    // 5) Compute label Y just above the model
-    const labelOffset = 0.05;  // 5 cm above the top
-    const labelY = halfScaledHeight + labelOffset;
-    labelEntity.setAttribute('position', `0 ${labelY} 0`);
+        // 5) Scale background to text width
+        const lines = menu[i].label.split('\n');
+        const longest = Math.max(...lines.map(l => l.length));
+        // Approximate width per character
+        const charW = 0.04;
+        bgEntity.setAttribute('width', longest * charW + 0.2);
+        bgEntity.setAttribute('height', lines.length * 0.05 + 0.2);
 
-    // 6) Show the label
-    labelEntity.setAttribute('visible', 'true');
-    }, { once: true });
-
+        // Show elements
+        dishEntity.setAttribute('visible', 'true');
+        bgEntity.setAttribute('visible', 'true');
+        labelEntity.setAttribute('visible', 'true');
+      }, { once: true });
     }
 
-    // initial
+    // Initial load
     loadDish(index);
 
-    // swipe
+    // Swipe detection
     let startX = null;
-    window.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
+    window.addEventListener('touchstart', e => startX = e.touches[0].clientX);
     window.addEventListener('touchend', e => {
       if (startX === null) return;
       const dx = e.changedTouches[0].clientX - startX;
