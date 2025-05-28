@@ -1,32 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Swipe-able AR Menu (Better Scaling)</title>
+  <meta charset="UTF-8" />
+  <title>Swipe-able AR Menu</title>
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.js"></script>
+  <!-- Optional: Custom Font -->
+  <script src="https://unpkg.com/aframe-fonts@0.2.0/dist/aframe-fonts.min.js"></script>
+
   <style>
     body { margin:0; overflow:hidden; }
     #instructions {
-      position:absolute; top:10px; width:100%;
-      text-align:center; color:#fff;
-      font-family:sans-serif; text-shadow:0 0 5px #000;
-      z-index:1;
+      position: absolute;
+      top: 10px;
+      width: 100%;
+      text-align: center;
+      color: #fff;
+      font-family: sans-serif;
+      text-shadow: 0 0 5px #000;
+      z-index: 1;
     }
   </style>
 </head>
 <body>
   <div id="instructions">Swipe left/right to browse menu items.</div>
-  <a-scene embedded
-           arjs="trackingMethod: best; sourceType: webcam;"
-           vr-mode-ui="enabled: false">
+
+  <a-scene
+    embedded
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true"
+  >
     <a-marker preset="hiro">
+      <!-- Model Container -->
       <a-entity id="dishModel" position="0 0 0" rotation="0 0 0"></a-entity>
-      <a-text id="dishLabel" value=""
-              align="center" position="0 0.01 0"
-              rotation="-90 0 0" color="#FFD740" width="2">
-      </a-text>
+
+      <!-- Text Label -->
+      <a-entity id="dishLabel"
+                text="value: ; align: center; color: #fff; width: 2; wrapCount: 25; font: roboto"
+                position="0 0 0"
+                geometry="primitive: plane; height: auto; width: auto"
+                material="color: #222; opacity: 0.8"
+                visible="false">
+      </a-entity>
     </a-marker>
+
     <a-entity camera></a-entity>
   </a-scene>
 
@@ -34,47 +52,52 @@
     const menu = [
       { model: 'models/dish3.glb', label: 'Classic Cheeseburger\n₹299' },
       { model: 'models/dish1.glb', label: 'Dessert\n₹249' },
-      // more items...
     ];
     let index = 0;
-    const dishEntity  = document.querySelector('#dishModel');
+
+    const dishEntity = document.querySelector('#dishModel');
     const labelEntity = document.querySelector('#dishLabel');
+    const labelText = labelEntity.getAttribute('text');
 
     function loadDish(i) {
-      // update label immediately
-      labelEntity.setAttribute('value', menu[i].label);
-
-      // clear old
       dishEntity.removeObject3D('mesh');
-      dishEntity.removeAttribute('gltf-model');
-      dishEntity.setAttribute('scale', '1 1 1');
-      dishEntity.setAttribute('position', '0 0 0');
-
-      // load new
       dishEntity.setAttribute('gltf-model', menu[i].model);
+
       dishEntity.addEventListener('model-loaded', () => {
         const mesh = dishEntity.getObject3D('mesh');
         const bbox = new THREE.Box3().setFromObject(mesh);
         const size = bbox.getSize(new THREE.Vector3());
-
-        // compute uniform scale so largest side = 0.5m
+        const center = bbox.getCenter(new THREE.Vector3());
+        const actualMax = Math.max(size.x, size.y, size.z);
         const desiredMax = 0.5;
-        const actualMax  = Math.max(size.x, size.y, size.z);
-        const s = desiredMax / actualMax;
-        dishEntity.setAttribute('scale', `${s} ${s} ${s}`);
+        const scaleFactor = desiredMax / actualMax;
 
-        // after scaling, shift up half of the scaled height so the base is on the marker
-        const halfHeight = (size.y * s) / 2;
-        dishEntity.setAttribute('position', `0 ${halfHeight} 0`);
+        dishEntity.setAttribute('scale', `${scaleFactor} ${scaleFactor} ${scaleFactor}`);
+
+        // Adjust model to be centered
+        mesh.position.sub(center.multiplyScalar(scaleFactor));
+
+        // Label position just below model
+        const yOffset = -size.y * scaleFactor - 0.1;
+        labelEntity.setAttribute('position', `0 ${yOffset} 0`);
+        labelEntity.setAttribute('text', {
+          value: menu[i].label,
+          align: 'center',
+          wrapCount: 25,
+          font: 'roboto',
+          width: 2,
+          color: '#fff'
+        });
+        labelEntity.setAttribute('visible', 'true');
       }, { once: true });
     }
 
-    // initial
     loadDish(index);
 
-    // swipe
     let startX = null;
-    window.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
+    window.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
+    });
     window.addEventListener('touchend', e => {
       if (startX === null) return;
       const dx = e.changedTouches[0].clientX - startX;
