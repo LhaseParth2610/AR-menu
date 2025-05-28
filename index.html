@@ -1,8 +1,9 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Swipe-able AR Menu (Polished)</title>
+  <title>Swipe-able AR Menu (Fixed)</title>
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.js"></script>
   <style>
@@ -24,11 +25,11 @@
            arjs="trackingMethod: best; sourceType: webcam;"
            vr-mode-ui="enabled: false"
            renderer="logarithmicDepthBuffer: true;">
-           <a-marker preset="hiro">
-                <a-entity id="dishModel" visible="false" scale="1 1 1" position="0 0 0"></a-entity>
-                <a-plane id="labelBg" width="1.2" height="0.4" color="#000" opacity="0.6" position="0 0.8 0" rotation="-15 0 0" visible="false"></a-plane>
-                <a-text id="dishLabel" align="center" color="#FFD740" width="1" position="0 0.8 0" rotation="-15 0 0" visible="false" class="fade-in"></a-text>
-          </a-marker>
+    <a-marker preset="hiro">
+      <a-entity id="dishModel" visible="false" scale="1 1 1" position="0 0 0"></a-entity>
+      <a-plane id="labelBg" width="1.2" height="0.4" color="#000" opacity="0.6" position="0 0.8 0" rotation="-15 0 0" visible="false"></a-plane>
+      <a-text id="dishLabel" align="center" color="#FFD740" width="1" position="0 0.8 0" rotation="-15 0 0" visible="false" class="fade-in"></a-text>
+    </a-marker>
     <a-entity camera></a-entity>
   </a-scene>
 
@@ -46,74 +47,82 @@
     const bgEntity = document.querySelector('#labelBg');
 
     function loadDish(i) {
-  if (isLoading) return;
-  isLoading = true;
+      if (isLoading) return;
+      isLoading = true;
 
-  // Hide until loaded
-  dishEntity.setAttribute('visible', 'false');
-  labelEntity.setAttribute('visible', 'false');
-  bgEntity.setAttribute('visible', 'false');
+      // Hide until loaded
+      dishEntity.setAttribute('visible', 'false');
+      labelEntity.setAttribute('visible', 'false');
+      bgEntity.setAttribute('visible', 'false');
 
-  // Remove old
-  dishEntity.removeObject3D('mesh');
-  dishEntity.removeAttribute('gltf-model');
-  dishEntity.setAttribute('scale', '1 1 1');
-  dishEntity.setAttribute('position', '0 0 0');
+      // Remove old model
+      dishEntity.removeObject3D('mesh');
+      dishEntity.removeAttribute('gltf-model');
+      dishEntity.setAttribute('scale', '1 1 1');
+      dishEntity.setAttribute('position', '0 0 0');
 
-  // Update label text and adjust background size
-  labelEntity.setAttribute('value', menu[i].label);
-  const textWidth = Math.min(1.8, menu[i].label.length * 0.05); // Rough estimate
-  labelEntity.setAttribute('width', textWidth);
-  bgEntity.setAttribute('width', textWidth * 1.2);
-  bgEntity.setAttribute('height', menu[i].label.includes('\n') ? 0.4 : 0.3);
+      // Update label text and adjust background size
+      labelEntity.setAttribute('value', menu[i].label);
+      const textWidth = Math.min(1.8, menu[i].label.length * 0.05);
+      labelEntity.setAttribute('width', textWidth);
+      bgEntity.setAttribute('width', textWidth * 1.2);
+      bgEntity.setAttribute('height', menu[i].label.includes('\n') ? 0.4 : 0.3);
 
-  // Load new model
-  dishEntity.setAttribute('gltf-model', menu[i].model);
+      // Load new model
+      dishEntity.setAttribute('gltf-model', menu[i].model);
 
-  dishEntity.addEventListener('model-error', () => {
-    console.error('Failed to load model:', menu[i].model);
-    labelEntity.setAttribute('value', 'Error loading dish');
-    labelEntity.setAttribute('visible', 'true');
-    bgEntity.setAttribute('visible', 'true');
-    isLoading = false;
-  }, { once: true });
+      dishEntity.addEventListener('model-error', () => {
+        console.error('Failed to load model:', menu[i].model);
+        labelEntity.setAttribute('value', 'Error loading dish');
+        labelEntity.setAttribute('visible', 'true');
+        bgEntity.setAttribute('visible', 'true');
+        isLoading = false;
+      }, { once: true });
 
-  dishEntity.addEventListener('model-loaded', () => {
-    const mesh = dishEntity.getObject3D('mesh');
-    const bbox = new THREE.Box3().setFromObject(mesh);
-    const center = bbox.getCenter(new THREE.Vector3());
-    console.log('Model:', menu[i].model, 'Center:', center.x, center.y, center.z);
-    mesh.position.sub(center);
+      dishEntity.addEventListener('model-loaded', () => {
+        const mesh = dishEntity.getObject3D('mesh');
+        const bbox = new THREE.Box3().setFromObject(mesh);
+        const center = bbox.getCenter(new THREE.Vector3());
+        const min = bbox.min;
+        const max = bbox.max;
+        console.log('Model:', menu[i].model, 'Center:', center.x, center.y, center.z, 'Min:', min.x, min.y, min.z, 'Max:', max.x, max.y, max.z);
+        mesh.position.sub(center);
 
-    const size = bbox.getSize(new THREE.Vector3());
-    console.log('Size:', size.x, size.y, size.z);
-    const desiredMax = 0.5;
-    const actualMax = Math.max(size.x, size.y, size.z);
-    const s = (desiredMax / actualMax) * menu[i].scaleAdjust;
-    console.log('Scale factor:', s);
-    dishEntity.setAttribute('scale', `${s} ${s} ${s}`);
+        const size = bbox.getSize(new THREE.Vector3());
+        console.log('Size:', size.x, size.y, size.z);
+        const desiredMax = 0.5;
+        const actualMax = Math.max(size.x, size.y, size.z);
+        const s = (desiredMax / actualMax) * menu[i].scaleAdjust;
+        console.log('Scale factor:', s);
+        dishEntity.setAttribute('scale', `${s} ${s} ${s}`);
 
-    const scaledHeight = size.y * s;
-    console.log('Scaled height:', scaledHeight);
-    // Position model assuming pivot at top or center
-    dishEntity.setAttribute('position', `0 ${scaledHeight + (menu[i].offsetY || 0)} 0`);
+        const scaledHeight = size.y * s;
+        const scaledMinY = min.y * s; // Base of model after scaling
+        console.log('Scaled height:', scaledHeight, 'Scaled min Y:', scaledMinY);
+        // Position model so base (min.y) is at y=0
+        const yOffset = -scaledMinY + (menu[i].offsetY || 0);
+        dishEntity.setAttribute('position', `0 ${yOffset} 0`);
 
-    // Position label above model
-    const labelHeight = scaledHeight + 0.3; // 0.3 units above model
-    labelEntity.setAttribute('position', `0 ${labelHeight} 0`);
-    bgEntity.setAttribute('position', `0 ${labelHeight} 0`);
+        // Position label above model, capped between 0.5 and 1.0
+        const labelHeight = Math.min(Math.max(scaledHeight + 0.3, 0.5), 1.0);
+        labelEntity.setAttribute('position', `0 ${labelHeight} 0`);
+        bgEntity.setAttribute('position', `0 ${labelHeight} 0`);
 
-    // Show all
-    dishEntity.setAttribute('visible', 'true');
-    bgEntity.setAttribute('visible', 'true');
-    labelEntity.setAttribute('visible', 'true');
-    isLoading = false;
-  }, { once: true });
-}
+        dishEntity.setAttribute('visible', 'true');
+        bgEntity.setAttribute('visible', 'true');
+        labelEntity.setAttribute('visible', 'true');
+        isLoading = false;
+      }, { once: true });
+    }
 
-    // Load after scene initialization
-    document.querySelector('a-scene').addEventListener('loaded', () => {
-      loadDish(index);
+    // Wait for scene and marker detection
+    const scene = document.querySelector('a-scene');
+    const marker = document.querySelector('a-marker');
+    scene.addEventListener('loaded', () => {
+      // Ensure marker is detected before loading
+      marker.addEventListener('markerFound', () => {
+        loadDish(index);
+      }, { once: true });
     });
 
     // Swipe detection
