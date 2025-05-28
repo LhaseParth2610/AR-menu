@@ -1,123 +1,92 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>AR Menu - Swipe Models</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
-    <style>
-      body, html {
-        margin: 0;
-        overflow: hidden;
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Swipe-able AR Menu</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.js"></script>
+  <style>
+    body { margin:0; overflow:hidden; }
+    #instructions {
+      position:absolute; top:10px; width:100%;
+      text-align:center; color:#fff;
+      font-family:sans-serif; text-shadow:0 0 5px #000;
+      z-index:1;
+    }
+  </style>
+</head>
+<body>
+  <div id="instructions">
+    Swipe left/right to browse menu items.
+  </div>
+
+  <a-scene
+    embedded
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true;"
+  >
+    <!-- Single HIRO marker for all dishes -->
+    <a-marker preset="hiro">
+
+      <!-- 3D model entity to be swapped -->
+      <a-entity id="dishModel"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="0.5 0.5 0.5">
+      </a-entity>
+
+      <!-- Text label for name & price -->
+      <a-text id="dishLabel"
+              value=""
+              align="center"
+              position="0 0.9 0"
+              rotation="-90 0 0"
+              color="#FFD740"
+              width="2">
+      </a-text>
+
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    // Define your menu items
+    const menu = [
+      { model: 'models/dish1.glb', label: 'Classic Cheeseburger\n₹299' },
+      { model: 'models/dish2.glb', label: 'Veggie Delight Burger\n₹249' },
+      // add more items here...
+    ];
+    let index = 0;
+
+    const dishEntity = document.querySelector('#dishModel');
+    const labelEntity = document.querySelector('#dishLabel');
+
+    // Function to load a GLB into the a-entity
+    function loadDish(i) {
+      dishEntity.setAttribute('gltf-model', menu[i].model);
+      labelEntity.setAttribute('value', menu[i].label);
+    }
+
+    // Initial load
+    loadDish(index);
+
+    // Swipe detection
+    let startX = null;
+    window.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
+    });
+    window.addEventListener('touchend', e => {
+      if (startX === null) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 50) {
+        // left swipe -> next, right swipe -> prev
+        index = (index + (dx < 0 ? 1 : -1) + menu.length) % menu.length;
+        loadDish(index);
       }
-      .swipe-hint {
-        position: fixed;
-        bottom: 20px;
-        width: 100%;
-        text-align: center;
-        color: white;
-        font-size: 18px;
-        background: rgba(0, 0, 0, 0.5);
-        padding: 10px;
-        z-index: 10;
-      }
-    </style>
-  </head>
-
-  <body>
-    <!-- Swipe hint -->
-    <div class="swipe-hint">Swipe left or right to change the model</div>
-
-    <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'>
-      <!-- Preload models -->
-      <a-assets>
-        <a-asset-item id="pizzaModel" src="assets/pizza.glb"></a-asset-item>
-        <a-asset-item id="burgerModel" src="assets/burger.glb"></a-asset-item>
-        <a-asset-item id="desertModel" src="assets/desert.glb"></a-asset-item>
-      </a-assets>
-
-      <!-- Hiro Marker -->
-      <a-marker preset="hiro">
-        <!-- adjusted the scale for better visibility -->
-        <a-entity
-        id="modelViewer"
-        gltf-model="#pizzaModel"
-          scale="0.3 0.3 0.3"  
-          position="0 0 0"
-          rotation="0 0 0"
-          visible="false"
-          animation="property: opacity; from: 0; to: 1; dur: 500; startEvents: fadeIn">
-        </a-entity>
-      </a-marker>
-
-      <!-- Camera -->
-      <a-entity camera></a-entity>
-    </a-scene>
-
-    <script>
-      const models = ["#pizzaModel", "#burgerModel", "#desertModel"];
-      let currentIndex = 0;
-
-      document.addEventListener("DOMContentLoaded", () => {
-        const scene = document.querySelector("a-scene");
-        const modelViewer = document.getElementById("modelViewer");
-
-        scene.addEventListener("markerFound", () => {
-          modelViewer.setAttribute("visible", "true");  // Show immediately
-          modelViewer.emit("fadeIn");
-        });
-
-        scene.addEventListener("markerLost", () => {
-          modelViewer.setAttribute("visible", "false");
-        });
-      });
-
-      function updateModel(direction) {
-        const modelViewer = document.getElementById("modelViewer");
-
-        modelViewer.setAttribute("visible", "false");
-
-        setTimeout(() => {
-          if (direction === "left") {
-            currentIndex = (currentIndex + 1) % models.length;
-          } else if (direction === "right") {
-            currentIndex = (currentIndex - 1 + models.length) % models.length;
-          }
-
-          modelViewer.setAttribute("gltf-model", models[currentIndex]);
-          modelViewer.setAttribute("visible", "true");
-          modelViewer.emit("fadeIn");
-        }, 300);
-      }
-
-      let touchStartX = null;
-      const SWIPE_THRESHOLD = 50;
-      let isSwiping = false;
-
-      window.addEventListener("touchstart", (event) => {
-        touchStartX = event.touches[0].clientX;
-      });
-
-      window.addEventListener("touchend", (event) => {
-        if (touchStartX === null || isSwiping) return;
-
-        const touchEndX = event.changedTouches[0].clientX;
-        const deltaX = touchEndX - touchStartX;
-
-        if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
-          isSwiping = true;
-          if (deltaX > 0) {
-            updateModel("right");
-          } else {
-            updateModel("left");
-          }
-
-          setTimeout(() => {
-            isSwiping = false;
-          }, 300);
-        }
-
-        touchStartX = null;
-      });
-    </script>
-  </body>
+      startX = null;
+    });
+  </script>
+</body>
 </html>
