@@ -90,7 +90,7 @@
 
         // Compute uniform scale so largest side ≤0.5m
         const size = bbox.getSize(new THREE.Vector3());
-        const desiredMax = 0.5;
+        const desiredMax = 0.7;
         const actualMax  = Math.max(size.x, size.y, size.z);
         const s = desiredMax / actualMax;
         dishEntity.setAttribute('scale', `${s} ${s} ${s}`);
