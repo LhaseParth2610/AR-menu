@@ -33,7 +33,7 @@
       <a-plane id="labelBg"
                width="1" height="0.3"
                color="#000" opacity="0.6"
-               position="0 0 0"
+               position="0 0.6 0"
                visible="false">
       </a-plane>
 
@@ -42,7 +42,7 @@
               align="center"
               color="#FFD740"
               width="1.8"
-              position="0 0 0"
+              position="0 0.6 0"
               visible="false"
               class="fade-in">
       </a-text>
@@ -99,19 +99,6 @@
         const scaledHeight = size.y * s;
         const halfHeight = scaledHeight / 2;
         dishEntity.setAttribute('position', `0 ${halfHeight} 0`);
-
-        // Position label just above the model
-        const labelOffset = 0.05;
-        const labelY = halfHeight + labelOffset;
-        labelEntity.setAttribute('position', `0 ${labelY} 0`);
-        bgEntity.setAttribute('position', `0 ${labelY - 0.05} 0.01`);
-
-        // Optionally adjust bg size to text length
-        const lines = menu[i].label.split('\n');
-        const longest = Math.max(...lines.map(l => l.length));
-        const charW = 0.04;
-        bgEntity.setAttribute('width', longest * charW + 0.2);
-        bgEntity.setAttribute('height', lines.length * 0.05 + 0.2);
 
         // Show all
         dishEntity.setAttribute('visible', 'true');
