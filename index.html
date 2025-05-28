@@ -35,7 +35,8 @@
       <a-entity id="dishModel"
                 position="0 0 0"
                 rotation="0 0 0"
-                scale="0.5 0.5 0.5">
+                scale="0.5 0.5 0.5">    <!-- For dish 1 -->
+                
       </a-entity>
 
       <!-- Text label for name & price -->
@@ -58,7 +59,7 @@
     // Define your menu items
     const menu = [
       { model: 'models/dish3.glb', label: 'Classic Cheeseburger\n₹299' },
-      { model: 'models/dish2.glb', label: 'Dessert\n₹249' },
+      { model: 'models/dish1.glb', label: 'Dessert\n₹249' },
       // add more items here...
     ];
     let index = 0;
@@ -67,14 +68,38 @@
     const labelEntity = document.querySelector('#dishLabel');
 
     // Function to load a GLB into the a-entity
-    function loadDish(i) {
-      // remove previous mesh so the new model will load
-      dishEntity.removeObject3D('mesh');
-      // set the new model URL
-      dishEntity.setAttribute('gltf-model', menu[i].model);
-      // update the text label
-      labelEntity.setAttribute('value', menu[i].label);
-    }
+            function loadDish(i) {
+                // remove any previously loaded model
+                dishEntity.removeObject3D('mesh');
+
+                // set the new model URL
+                dishEntity.setAttribute('gltf-model', menu[i].model);
+
+                // once it's loaded, compute its dimensions & scale
+                dishEntity.addEventListener('model-loaded', () => {
+                    const mesh = dishEntity.getObject3D('mesh');
+                    const bbox = new THREE.Box3().setFromObject(mesh);
+                    const size = bbox.getSize(new THREE.Vector3());
+                    // find the largest dimension (width, height, depth)
+                    const actualMax = Math.max(size.x, size.y, size.z);
+
+                    // choose your desired maximum real-world size (in meters)
+                    const desiredMax = 0.5;
+
+                    // compute uniform scale factor
+                    const scaleFactor = desiredMax / actualMax;
+
+                    // apply scale
+                    dishEntity.setAttribute('scale', `
+                    ${scaleFactor} 
+                    ${scaleFactor} 
+                    ${scaleFactor}
+                    `);
+
+                    // update the label text
+                    labelEntity.setAttribute('value', menu[i].label);
+                }, { once: true });
+            }
 
     // Initial load
     loadDish(index);
