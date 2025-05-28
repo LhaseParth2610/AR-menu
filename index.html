@@ -11,10 +11,8 @@
       position:absolute; top:10px; width:100%;
       text-align:center; color:#fff;
       font-family:sans-serif; text-shadow:0 0 5px #000;
-      z-index:1;
-      opacity:0.8;
+      z-index:1; opacity:0.8;
     }
-    /* Simple fade-in animation */
     .fade-in { animation: fadeIn 0.5s ease-out forwards; }
     @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
   </style>
@@ -85,37 +83,42 @@
       dishEntity.addEventListener('model-loaded', () => {
         const mesh = dishEntity.getObject3D('mesh');
 
-        // Get bounding box and size
+        // Center mesh at origin
         const bbox = new THREE.Box3().setFromObject(mesh);
         const center = bbox.getCenter(new THREE.Vector3());
+        mesh.position.sub(center);
+
+        // Compute uniform scale so largest side ≤0.5m
         const size = bbox.getSize(new THREE.Vector3());
-
-        // Desired uniform scale so the largest dimension is 0.5 meters
         const desiredMax = 0.5;
-        const actualMax = Math.max(size.x, size.y, size.z);
+        const actualMax  = Math.max(size.x, size.y, size.z);
         const s = desiredMax / actualMax;
-
-        // Move the mesh to be centered at origin
-        mesh.position.sub(center); // shifts model to origin
-
-        // Scale the entire entity
         dishEntity.setAttribute('scale', `${s} ${s} ${s}`);
 
-        // Now recompute bounding box after centering
+        // Position model so its base sits at Y = scaledHeight/2
         const scaledHeight = size.y * s;
+        const halfHeight = scaledHeight / 2;
+        dishEntity.setAttribute('position', `0 ${halfHeight} 0`);
 
-        // Place the model so its bottom touches the marker (Y = scaledHeight/2)
-        dishEntity.setAttribute('position', `0 ${scaledHeight / 2} 0`);
-
-        // Place label just above the model
+        // Position label just above the model
         const labelOffset = 0.05;
-        const labelY = (scaledHeight / 2) + labelOffset;
+        const labelY = halfHeight + labelOffset;
         labelEntity.setAttribute('position', `0 ${labelY} 0`);
+        bgEntity.setAttribute('position', `0 ${labelY - 0.05} 0.01`);
 
-        // Show the label
+        // Optionally adjust bg size to text length
+        const lines = menu[i].label.split('\n');
+        const longest = Math.max(...lines.map(l => l.length));
+        const charW = 0.04;
+        bgEntity.setAttribute('width', longest * charW + 0.2);
+        bgEntity.setAttribute('height', lines.length * 0.05 + 0.2);
+
+        // Show all
+        dishEntity.setAttribute('visible', 'true');
+        bgEntity.setAttribute('visible', 'true');
         labelEntity.setAttribute('visible', 'true');
-        }, { once: true });
-
+      }, { once: true });
+    }
 
     // Initial load
     loadDish(index);
