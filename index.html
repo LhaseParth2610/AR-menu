@@ -2,9 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Swipe-able AR Menu</title>\
-  <!-- A-Frame: A framework for building 3D and AR/VR experiences.
-       AR.js: A library for integrating AR functionality into A-Frame. -->
+  <title>Swipe-able AR Menu</title>
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.js"></script>
   <style>
@@ -22,24 +20,16 @@
     Swipe left/right to browse menu items.
   </div>
 
-  <a-scene
-    embedded
-    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
-    vr-mode-ui="enabled: false"
-    renderer="logarithmicDepthBuffer: true;">
+  <a-scene embedded
+           arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+           vr-mode-ui="enabled: false">
     
-    <!-- Single HIRO marker for all dishes -->
     <a-marker preset="hiro">
-
-      <!-- 3D model entity to be swapped -->
       <a-entity id="dishModel"
                 position="0 0 0"
                 rotation="0 0 0"
-                scale="0.5 0.5 0.5">    <!-- For dish 1 -->
-                
+                scale="1 1 1">
       </a-entity>
-
-      <!-- Text label for name & price -->
       <a-text id="dishLabel"
               value=""
               align="center"
@@ -48,15 +38,12 @@
               color="#FFD740"
               width="2">
       </a-text>
-
     </a-marker>
 
-    <!-- Camera -->
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    // Define your menu items
     const menu = [
       { model: 'models/dish3.glb', label: 'Classic Cheeseburger\n₹299' },
       { model: 'models/dish1.glb', label: 'Dessert\n₹249' },
@@ -67,57 +54,56 @@
     const dishEntity  = document.querySelector('#dishModel');
     const labelEntity = document.querySelector('#dishLabel');
 
-    // Function to load a GLB into the a-entity
-            function loadDish(i) {
-                // remove any previously loaded model
-                dishEntity.removeObject3D('mesh');
+    function loadDish(i) {
+      // 1) Update label immediately
+      labelEntity.setAttribute('value', menu[i].label);
 
-                // set the new model URL
-                dishEntity.setAttribute('gltf-model', menu[i].model);
+      // 2) Remove old mesh and model attribute
+      dishEntity.removeObject3D('mesh');
+      dishEntity.removeAttribute('gltf-model');
 
-                // once it's loaded, compute its dimensions & scale
-                dishEntity.addEventListener('model-loaded', () => {
-                    const mesh = dishEntity.getObject3D('mesh');
-                    const bbox = new THREE.Box3().setFromObject(mesh);
-                    const size = bbox.getSize(new THREE.Vector3());
-                    // find the largest dimension (width, height, depth)
-                    const actualMax = Math.max(size.x, size.y, size.z);
+      // 3) Reset to default scale (so old scale doesn't "stick")
+      dishEntity.setAttribute('scale', '1 1 1');
 
-                    // choose your desired maximum real-world size (in meters)
-                    const desiredMax = 0.5;
+      // 4) Now set the new model attribute
+      dishEntity.setAttribute('gltf-model', menu[i].model);
 
-                    // compute uniform scale factor
-                    const scaleFactor = desiredMax / actualMax;
+      // 5) When it's loaded, auto-scale & center
+      dishEntity.addEventListener('model-loaded', () => {
+        const mesh = dishEntity.getObject3D('mesh');
+        const bbox = new THREE.Box3().setFromObject(mesh);
+        const size = bbox.getSize(new THREE.Vector3());
+        const actualMax = Math.max(size.x, size.y, size.z);
+        const desiredMax = 0.5;  // meters
+        const scaleFactor = desiredMax / actualMax;
 
-                    // apply scale
-                    dishEntity.setAttribute('scale', `
-                    ${scaleFactor} 
-                    ${scaleFactor} 
-                    ${scaleFactor}
-                    `);
+        // center mesh
+        const center = bbox.getCenter(new THREE.Vector3());
+        mesh.position.sub(center);
 
-                    // update the label text
-                    labelEntity.setAttribute('value', menu[i].label);
-                }, { once: true });
-            }
+        // apply uniform scale
+        dishEntity.setAttribute('scale',
+          `${scaleFactor} ${scaleFactor} ${scaleFactor}`
+        );
+      }, { once: true });
+    }
 
-    // Initial load
+    // initial load
     loadDish(index);
 
-    // Swipe detection
+    // swipe detection
     let startX = null;
     window.addEventListener('touchstart', e => {
       startX = e.touches[0].clientX;
     });
-        window.addEventListener('touchend', e => {
-    if (startX === null) return; // If no touchstart was recorded, exit
-    const dx = e.changedTouches[0].clientX - startX; // Calculate swipe distance
-    if (Math.abs(dx) > 50) { // Check if swipe distance exceeds threshold
-        // left swipe -> next, right swipe -> prev
+    window.addEventListener('touchend', e => {
+      if (startX === null) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 50) {
         index = (index + (dx < 0 ? 1 : -1) + menu.length) % menu.length;
-        loadDish(index); // Load the new dish based on updated index
-    }
-    startX = null; // Reset startX for the next swipe
+        loadDish(index);
+      }
+      startX = null;
     });
   </script>
 </body>
