@@ -55,29 +55,35 @@
       // load new
       dishEntity.setAttribute('gltf-model', menu[i].model);
       dishEntity.addEventListener('model-loaded', () => {
-        const mesh = dishEntity.getObject3D('mesh');
-        const bbox = new THREE.Box3().setFromObject(mesh);
-        const size = bbox.getSize(new THREE.Vector3());
+    const mesh = dishEntity.getObject3D('mesh');
 
-        // compute uniform scale so largest side = 0.5m
-        const desiredMax = 0.5;
-        const actualMax  = Math.max(size.x, size.y, size.z);
-        const s = desiredMax / actualMax;
-        dishEntity.setAttribute('scale', `${s} ${s} ${s}`);
+    // 1) Center the mesh on the marker plane
+    const bbox = new THREE.Box3().setFromObject(mesh);
+    const center = bbox.getCenter(new THREE.Vector3());
+    mesh.position.sub(center);
 
-        // after scaling, shift up half of the scaled height so the base is on the marker
-        const halfHeight = (size.y * s) / 2;
-        dishEntity.setAttribute('position', `0 ${halfHeight} 0`);
-        labelOffset=0.1;
-        const LabelY=halfHeight + (size.y * s / 2) + labelOffset
-        labelEntity.setAttribute('position', `0 ${LabelY} 0`);
+    // 2) Compute scale so that the largest dimension = 0.5 m
+    const size = bbox.getSize(new THREE.Vector3());
+    const desiredMax = 0.5;
+    const actualMax  = Math.max(size.x, size.y, size.z);
+    const s = desiredMax / actualMax;
+    dishEntity.setAttribute('scale', `${s} ${s} ${s}`);
 
-        // halfHeight = center of model
+    // 3) Compute the model’s half-height *after* scaling
+    const halfScaledHeight = (size.y * s) / 2;
 
-        // (size.y * s / 2) = distance from model center to top
+    // 4) Position the model so its base is at Y = 0
+    dishEntity.setAttribute('position', `0 ${halfScaledHeight} 0`);
 
-        // labelOffset = space above the model
-      }, { once: true });
+    // 5) Compute label Y just above the model
+    const labelOffset = 0.05;  // 5 cm above the top
+    const labelY = halfScaledHeight + labelOffset;
+    labelEntity.setAttribute('position', `0 ${labelY} 0`);
+
+    // 6) Show the label
+    labelEntity.setAttribute('visible', 'true');
+    }, { once: true });
+
     }
 
     // initial
