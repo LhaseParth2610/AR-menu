@@ -24,7 +24,7 @@
       <a-entity id="dishModel" position="0 0 0" rotation="0 0 0"></a-entity>
       <a-text id="dishLabel" value=""
               align="center" position="0 0.01 0"
-              rotation="-90 0 0" color="#FFD740" width="2">
+              rotation="-90 0 0" color="#FFD740" width="3">
       </a-text>
     </a-marker>
     <a-entity camera></a-entity>
@@ -32,8 +32,10 @@
 
   <script>
     const menu = [
-      { model: 'models/dish2.glb', label: 'Classic Cheeseburger\n₹299' },
-      { model: 'models/dish1.glb', label: 'Dessert\n₹249' },
+      { model: 'models/dish1.glb', label: 'Classic Cheeseburger\n₹299' },
+      { model: 'models/dish2.glb', label: 'Dessert\n₹249' },
+      { model: 'models/dish3.glb', label: 'Neapolitan Style Pizza\n₹749' },
+
       // more items...
     ];
     let index = 0;
@@ -66,6 +68,15 @@
         // after scaling, shift up half of the scaled height so the base is on the marker
         const halfHeight = (size.y * s) / 2;
         dishEntity.setAttribute('position', `0 ${halfHeight} 0`);
+        labelOffset=0.1;
+        const LabelY=halfHeight + (size.y * s / 2) + labelOffset
+        labelEntity.setAttribute('position', `0 ${LabelY} 0`);
+
+        // halfHeight = center of model
+
+        // (size.y * s / 2) = distance from model center to top
+
+        // labelOffset = space above the model
       }, { once: true });
     }
 
