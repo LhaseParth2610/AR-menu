@@ -22,7 +22,6 @@
            arjs="trackingMethod: best; sourceType: webcam;"
            vr-mode-ui="enabled: false"
            renderer="logarithmicDepthBuffer: true;">
-
     <a-marker preset="hiro">
       <a-entity id="dishModel"></a-entity>
       <a-text id="dishLabel"
@@ -32,7 +31,6 @@
               position="0 0.6 0">
       </a-text>
     </a-marker>
-
     <a-entity camera></a-entity>
   </a-scene>
 
@@ -44,42 +42,54 @@
     ];
     let index = 0;
 
-    const dishEntity  = document.querySelector('#dishModel');
+    const dishEntity = document.querySelector('#dishModel');
     const labelEntity = document.querySelector('#dishLabel');
 
     function loadDish(i) {
-      // clear old mesh
+      // Clear old mesh
       dishEntity.removeObject3D('mesh');
       dishEntity.removeAttribute('gltf-model');
 
-      // update label
+      // Update label
       labelEntity.setAttribute('value', menu[i].label);
 
-      // load new
+      // Load new model
       dishEntity.setAttribute('gltf-model', menu[i].model);
+
+      // Error handling
+      dishEntity.addEventListener('model-error', () => {
+        console.error('Failed to load model:', menu[i].model);
+        labelEntity.setAttribute('value', 'Error loading dish');
+      }, { once: true });
+
+      // Apply transformations on load
       dishEntity.addEventListener('model-loaded', () => {
         const mesh = dishEntity.getObject3D('mesh');
+        console.log('Model loaded:', menu[i].model);
 
-        // 1) center
+        // 1) Center the model
         const bbox = new THREE.Box3().setFromObject(mesh);
         const center = bbox.getCenter(new THREE.Vector3());
         mesh.position.sub(center);
 
-        // 2) compute scale
+        // 2) Compute scale
         const size = bbox.getSize(new THREE.Vector3());
+        console.log('Bounding box size:', size.x, size.y, size.z);
         const s = 0.5 / Math.max(size.x, size.y, size.z);
         dishEntity.setAttribute('scale', `${s} ${s} ${s}`);
+        console.log('Scale factor:', s);
 
-        // 3) position base at marker
+        // 3) Position base at marker
         const scaledHeight = size.y * s;
         dishEntity.setAttribute('position', `0 ${scaledHeight/2} 0`);
+        console.log('Scaled height:', scaledHeight);
       }, { once: true });
     }
 
-    // initial
+    // Initial load
     loadDish(index);
 
-    // swipe
+    // Swipe handling
     let startX = null;
     window.addEventListener('touchstart', e => startX = e.touches[0].clientX);
     window.addEventListener('touchend', e => {
