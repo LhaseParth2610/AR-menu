@@ -29,30 +29,20 @@
       <!-- Model -->
       <a-entity id="dishModel"></a-entity>
 
-      <!-- Label background -->
+      <!-- Label background plate
       <a-plane id="labelBg"
-               width="1.5" height="0.6"
-               color="#000" opacity="0.5"
-               position="0 1 0"
+               width="1" height="0.3"
+               color="#000" opacity="0.6"
+               position="0 0.6 0"
                visible="false">
-      </a-plane>
+      </a-plane> -->
 
-      <!-- Dish Title -->
-      <a-text id="dishTitle"
+      <!-- Label text -->
+      <a-text id="dishLabel"
               align="center"
               color="#FFD740"
-              width="2"
-              position="0 1.1 0.01"
-              visible="false"
-              class="fade-in">
-      </a-text>
-
-      <!-- Dish Price -->
-      <a-text id="dishPrice"
-              align="center"
-              color="#FFFFFF"
-              width="1.5"
-              position="0 0.9 0.01"
+              width="1.8"
+              position="0 0.6 0"
               visible="false"
               class="fade-in">
       </a-text>
@@ -63,22 +53,20 @@
 
   <script>
     const menu = [
-      { model: 'models/dish1.glb', title: 'Classic Cheeseburger', price: '₹299' },
-      { model: 'models/dish2.glb', title: 'Chocolate Lava Cake', price: '₹249' },
-      { model: 'models/dish3.glb', title: 'Neapolitan Pizza', price: '₹749' },
+      { model: 'models/dish1.glb', label: 'Classic Cheeseburger\n₹299' },
+      { model: 'models/dish2.glb', label: 'Chocolate Lava Cake\n₹249' },
+      { model: 'models/dish3.glb', label: 'Neapolitan Pizza\n₹749' },
     ];
     let index = 0;
 
-    const dishEntity   = document.querySelector('#dishModel');
-    const titleEntity  = document.querySelector('#dishTitle');
-    const priceEntity  = document.querySelector('#dishPrice');
-    const bgEntity     = document.querySelector('#labelBg');
+    const dishEntity  = document.querySelector('#dishModel');
+    const labelEntity = document.querySelector('#dishLabel');
+    const bgEntity    = document.querySelector('#labelBg');
 
     function loadDish(i) {
       // Hide until loaded
       dishEntity.setAttribute('visible', 'false');
-      titleEntity.setAttribute('visible', 'false');
-      priceEntity.setAttribute('visible', 'false');
+      labelEntity.setAttribute('visible', 'false');
       bgEntity.setAttribute('visible', 'false');
 
       // Remove old
@@ -87,38 +75,35 @@
       dishEntity.setAttribute('scale', '1 1 1');
       dishEntity.setAttribute('position', '0 0 0');
 
-      // Update text labels
-      titleEntity.setAttribute('value', menu[i].title);
-      priceEntity.setAttribute('value', menu[i].price);
+      // Update label text
+      labelEntity.setAttribute('value', menu[i].label);
 
       // Load new model
       dishEntity.setAttribute('gltf-model', menu[i].model);
       dishEntity.addEventListener('model-loaded', () => {
         const mesh = dishEntity.getObject3D('mesh');
         mesh.position.set(0, 0, 0);
-
-        // Center the mesh
+        // Center mesh at origin
         const bbox = new THREE.Box3().setFromObject(mesh);
         const center = bbox.getCenter(new THREE.Vector3());
         mesh.position.sub(center);
 
-        // Scale model so largest dimension <= 0.5m
+        // Compute uniform scale so largest side ≤0.5m
         const size = bbox.getSize(new THREE.Vector3());
         const desiredMax = 0.5;
         const actualMax  = Math.max(size.x, size.y, size.z);
         const s = desiredMax / actualMax;
         dishEntity.setAttribute('scale', `${s} ${s} ${s}`);
 
-        // Raise model so its base is at y = 0
+        // Position model so its base sits at Y = scaledHeight/2
         const scaledHeight = size.y * s;
         const halfHeight = scaledHeight / 2;
         dishEntity.setAttribute('position', `0 ${halfHeight} 0`);
 
-        // Show all elements
+        // Show all
         dishEntity.setAttribute('visible', 'true');
-        titleEntity.setAttribute('visible', 'true');
-        priceEntity.setAttribute('visible', 'true');
         bgEntity.setAttribute('visible', 'true');
+        labelEntity.setAttribute('visible', 'true');
       }, { once: true });
     }
 
