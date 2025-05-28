@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Swipe-able AR Menu</title>
+  <title>Swipe-able AR Menu (Better Scaling)</title>
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.js"></script>
   <style>
@@ -16,86 +16,65 @@
   </style>
 </head>
 <body>
-  <div id="instructions">
-    Swipe left/right to browse menu items.
-  </div>
-
+  <div id="instructions">Swipe left/right to browse menu items.</div>
   <a-scene embedded
-           arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+           arjs="trackingMethod: best; sourceType: webcam;"
            vr-mode-ui="enabled: false">
-    
     <a-marker preset="hiro">
-      <a-entity id="dishModel"
-                position="0 0 0"
-                rotation="0 0 0"
-                scale="1 1 1">
-      </a-entity>
-      <a-text id="dishLabel"
-              value=""
-              align="center"
-              position="0 0.9 0"
-              rotation="-90 0 0"
-              color="#FFD740"
-              width="2">
+      <a-entity id="dishModel" position="0 0 0" rotation="0 0 0"></a-entity>
+      <a-text id="dishLabel" value=""
+              align="center" position="0 0.01 0"
+              rotation="-90 0 0" color="#FFD740" width="2">
       </a-text>
     </a-marker>
-
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
     const menu = [
-      { model: 'models/dish3.glb', label: 'Classic Cheeseburger\n₹299' },
+      { model: 'models/dish2.glb', label: 'Classic Cheeseburger\n₹299' },
       { model: 'models/dish1.glb', label: 'Dessert\n₹249' },
-      // add more items here...
+      // more items...
     ];
     let index = 0;
-
     const dishEntity  = document.querySelector('#dishModel');
     const labelEntity = document.querySelector('#dishLabel');
 
     function loadDish(i) {
-      // 1) Update label immediately
+      // update label immediately
       labelEntity.setAttribute('value', menu[i].label);
 
-      // 2) Remove old mesh and model attribute
+      // clear old
       dishEntity.removeObject3D('mesh');
       dishEntity.removeAttribute('gltf-model');
-
-      // 3) Reset to default scale (so old scale doesn't "stick")
       dishEntity.setAttribute('scale', '1 1 1');
+      dishEntity.setAttribute('position', '0 0 0');
 
-      // 4) Now set the new model attribute
+      // load new
       dishEntity.setAttribute('gltf-model', menu[i].model);
-
-      // 5) When it's loaded, auto-scale & center
       dishEntity.addEventListener('model-loaded', () => {
         const mesh = dishEntity.getObject3D('mesh');
         const bbox = new THREE.Box3().setFromObject(mesh);
         const size = bbox.getSize(new THREE.Vector3());
-        const actualMax = Math.max(size.x, size.y, size.z);
-        const desiredMax = 0.5;  // meters
-        const scaleFactor = desiredMax / actualMax;
 
-        // center mesh
-        const center = bbox.getCenter(new THREE.Vector3());
-        mesh.position.sub(center);
+        // compute uniform scale so largest side = 0.5m
+        const desiredMax = 0.5;
+        const actualMax  = Math.max(size.x, size.y, size.z);
+        const s = desiredMax / actualMax;
+        dishEntity.setAttribute('scale', `${s} ${s} ${s}`);
 
-        // apply uniform scale
-        dishEntity.setAttribute('scale',
-          `${scaleFactor} ${scaleFactor} ${scaleFactor}`
-        );
+        // after scaling, shift up half of the scaled height so the base is on the marker
+        const halfHeight = (size.y * s) / 2;
+        dishEntity.setAttribute('position', `0 ${halfHeight} 0`);
       }, { once: true });
     }
 
-    // initial load
+    // initial
     loadDish(index);
 
-    // swipe detection
+    // swipe
     let startX = null;
-    window.addEventListener('touchstart', e => {
-      startX = e.touches[0].clientX;
-    });
+    window.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
     window.addEventListener('touchend', e => {
       if (startX === null) return;
       const dx = e.changedTouches[0].clientX - startX;
