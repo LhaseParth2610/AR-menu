@@ -24,46 +24,31 @@
            arjs="trackingMethod: best; sourceType: webcam;"
            vr-mode-ui="enabled: false"
            renderer="logarithmicDepthBuffer: true;">
-
     <a-marker preset="hiro">
-      <!-- Model -->
-      <a-entity id="dishModel"></a-entity>
-
-      <!-- Label background plate -->
-      <a-plane id="labelBg"
-               width="1" height="0.3"
-               color="#000" opacity="0.6"
-               position="0 0.6 0"
-               visible="false">
-      </a-plane>
-
-      <!-- Label text -->
-      <a-text id="dishLabel"
-              align="center"
-              color="#FFD740"
-              width="1.8"
-              position="0 0.6 0"
-              visible="false"
-              class="fade-in">
-      </a-text>
+      <a-entity id="dishModel" visible="false" scale="1 1 1" position="0 0 0"></a-entity>
+      <a-plane id="labelBg" width="1" height="0.3" color="#000" opacity="0.6" position="0 0.6 0" visible="false"></a-plane>
+      <a-text id="dishLabel" align="center" color="#FFD740" width="1.8" position="0 0.6 0" visible="false" class="fade-in"></a-text>
     </a-marker>
-
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
     const menu = [
-      { model: 'models/dish1.glb', label: 'Classic Cheeseburger\n₹299' },
-      { model: 'models/dish2.glb', label: 'Chocolate Lava Cake\n₹249' },
-      { model: 'models/dish3.glb', label: 'Neapolitan Pizza\n₹749' },
+      { model: 'models/dish1.glb', label: 'Classic Cheeseburger\n₹299', offsetY: 0, scaleAdjust: 1 },
+      { model: 'models/dish2.glb', label: 'Chocolate Lava Cake\n₹249', offsetY: 0, scaleAdjust: 1 },
+      { model: 'models/dish3.glb', label: 'Neapolitan Pizza\n₹749', offsetY: 0, scaleAdjust: 1 },
     ];
     let index = 0;
+    let isLoading = false;
 
-    const dishEntity  = document.querySelector('#dishModel');
+    const dishEntity = document.querySelector('#dishModel');
     const labelEntity = document.querySelector('#dishLabel');
-    const bgEntity    = document.querySelector('#labelBg');
+    const bgEntity = document.querySelector('#labelBg');
 
     function loadDish(i) {
+      if (isLoading) return;
+      isLoading = true;
+
       // Hide until loaded
       dishEntity.setAttribute('visible', 'false');
       labelEntity.setAttribute('visible', 'false');
@@ -80,41 +65,57 @@
 
       // Load new model
       dishEntity.setAttribute('gltf-model', menu[i].model);
+
+      // Error handling
+      dishEntity.addEventListener('model-error', () => {
+        console.error('Failed to load model:', menu[i].model);
+        labelEntity.setAttribute('value', 'Error loading dish');
+        labelEntity.setAttribute('visible', 'true');
+        bgEntity.setAttribute('visible', 'true');
+        isLoading = false;
+      }, { once: true });
+
+      // Apply transformations
       dishEntity.addEventListener('model-loaded', () => {
         const mesh = dishEntity.getObject3D('mesh');
+        console.log('Model loaded:', menu[i].model);
 
-        // Center mesh at origin
+        // Center mesh
         const bbox = new THREE.Box3().setFromObject(mesh);
         const center = bbox.getCenter(new THREE.Vector3());
         mesh.position.sub(center);
 
-        // Compute uniform scale so largest side ≤0.5m
+        // Compute scale
         const size = bbox.getSize(new THREE.Vector3());
-        const desiredMax = 0.7;
-        const actualMax  = Math.max(size.x, size.y, size.z);
-        const s = desiredMax / actualMax;
+        console.log('Bounding box:', size.x, size.y, size.z);
+        const desiredMax = 0.5;
+        const actualMax = Math.max(size.x, size.y, size.z);
+        const s = (desiredMax / actualMax) * menu[i].scaleAdjust;
         dishEntity.setAttribute('scale', `${s} ${s} ${s}`);
 
-        // Position model so its base sits at Y = scaledHeight/2
+        // Position base at marker
         const scaledHeight = size.y * s;
         const halfHeight = scaledHeight / 2;
-        dishEntity.setAttribute('position', `0 ${halfHeight} 0`);
+        dishEntity.setAttribute('position', `0 ${halfHeight + menu[i].offsetY} 0`);
 
         // Show all
         dishEntity.setAttribute('visible', 'true');
         bgEntity.setAttribute('visible', 'true');
         labelEntity.setAttribute('visible', 'true');
+        isLoading = false;
       }, { once: true });
     }
 
-    // Initial load
-    loadDish(index);
+    // Load after scene initialization
+    document.querySelector('a-scene').addEventListener('loaded', () => {
+      loadDish(index);
+    });
 
     // Swipe detection
     let startX = null;
     window.addEventListener('touchstart', e => startX = e.touches[0].clientX);
     window.addEventListener('touchend', e => {
-      if (startX === null) return;
+      if (startX === null || isLoading) return;
       const dx = e.changedTouches[0].clientX - startX;
       if (Math.abs(dx) > 50) {
         index = (index + (dx < 0 ? 1 : -1) + menu.length) % menu.length;
