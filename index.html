@@ -101,24 +101,24 @@
         const halfHeight = (size.y * s) / 2;
         dishEntity.setAttribute('position', `0 ${halfHeight} 0`);
 
-        // 4) Label sits slightly above top of model
-        const labelOffset = 0.05;
-        const labelY = halfHeight + (size.y * s) / 2 + labelOffset;
-        labelEntity.setAttribute('position', `0 ${labelY} 0`);
-        bgEntity.setAttribute('position', `0 ${labelY} 0.01`);
+        // // 4) Label sits slightly above top of model
+        // const labelOffset = 0.05;
+        // const labelY = halfHeight + (size.y * s) / 2 + labelOffset;
+        // labelEntity.setAttribute('position', `0 ${labelY} 0`);
+        // bgEntity.setAttribute('position', `0 ${labelY} 0.01`);
 
-        // 5) Scale background to text width
-        const lines = menu[i].label.split('\n');
-        const longest = Math.max(...lines.map(l => l.length));
-        // Approximate width per character
-        const charW = 0.04;
-        bgEntity.setAttribute('width', longest * charW + 0.2);
-        bgEntity.setAttribute('height', lines.length * 0.05 + 0.2);
+        // // 5) Scale background to text width
+        // const lines = menu[i].label.split('\n');
+        // const longest = Math.max(...lines.map(l => l.length));
+        // // Approximate width per character
+        // const charW = 0.04;
+        // bgEntity.setAttribute('width', longest * charW + 0.2);
+        // bgEntity.setAttribute('height', lines.length * 0.05 + 0.2);
 
         // Show elements
         dishEntity.setAttribute('visible', 'true');
-        bgEntity.setAttribute('visible', 'true');
-        labelEntity.setAttribute('visible', 'true');
+        // bgEntity.setAttribute('visible', 'true');
+        // labelEntity.setAttribute('visible', 'true');
       }, { once: true });
     }
 
