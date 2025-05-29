@@ -63,7 +63,7 @@ const menuData = {
       name: "Corn Pizza",
       description: "Cheesy delight with corn & capsicum",
       image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop",
-      modelPath: "/models/corn-pizza.glb",
+      modelPath: "/models/pizza.glb",
       calories: 250,
       serves: 1,
       type: "Veg",
