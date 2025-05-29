@@ -82,7 +82,7 @@
 
       // Remove old model
       dishEntity.removeObject3D('mesh');
-      dashEntity.removeAttribute('gltf-model');
+      dishEntity.removeAttribute('gltf-model'); // Fixed typo: was 'dashEntity'
       dishEntity.setAttribute('scale', '1 1 1');
       dishEntity.setAttribute('position', '0 0 0');
       dishEntity.setAttribute('rotation', '0 0 0'); // Reset rotation
@@ -90,13 +90,14 @@
       // Load new model
       dishEntity.setAttribute('gltf-model', menu[i].model);
 
-      dishEntity.addEventListener('model-error', () => {
-        console.error('Failed to load model:', menu[i].model);
+      dishEntity.addEventListener('model-error', (event) => {
+        console.error('Failed to load model:', menu[i].model, event.detail);
         infoPanel.innerHTML = 'Error loading dish';
         isLoading = false;
       }, { once: true });
 
       dishEntity.addEventListener('model-loaded', () => {
+        console.log('Model loaded successfully:', menu[i].model);
         const mesh = dishEntity.getObject3D('mesh');
         const bbox = new THREE.Box3().setFromObject(mesh);
         const center = bbox.getCenter(new THREE.Vector3());
@@ -119,6 +120,7 @@
         dishEntity.setAttribute('position', `0 ${yOffset} 0`);
 
         dishEntity.setAttribute('visible', 'true');
+        console.log('Model set to visible with scale:', s, 'and position:', yOffset);
         isLoading = false;
       }, { once: true });
     }
@@ -129,11 +131,13 @@
       const nextBtn = document.getElementById('nextBtn');
 
       prevBtn.addEventListener('click', () => {
+        console.log('Previous button clicked');
         index = (index - 1 + menu.length) % menu.length;
         loadDish(index);
       });
 
       nextBtn.addEventListener('click', () => {
+        console.log('Next button clicked');
         index = (index + 1) % menu.length;
         loadDish(index);
       });
@@ -142,7 +146,7 @@
     // Add drag functionality for rotation and zoom
     function addDragFunctionality() {
       const scene = document.querySelector('a-scene');
-      let isDragging = false;
+       let isDragging = false;
       let lastMouseX = 0;
       let lastMouseY = 0;
 
@@ -196,11 +200,13 @@
     const marker = document.querySelector('a-marker');
     scene.addEventListener('loaded', () => {
       marker.addEventListener('markerFound', () => {
+        console.log('Marker found');
         infoPanel.style.display = 'block';
         loadDish(index);
       }, { once: true });
 
       marker.addEventListener('markerLost', () => {
+        console.log('Marker lost');
         infoPanel.style.display = 'none';
       });
     });
@@ -212,7 +218,9 @@
       if (startX === null || isLoading) return;
       const dx = e.changedTouches[0].clientX - startX;
       if (Math.abs(dx) > 50) {
-        index = (index + (dx < 0 ? 1 : -1) + menu.length) % menu.length;
+        const newIndex = (index + (dx < 0 ? 1 : -1) + menu.length) % menu.length;
+        console.log('Swipe detected, new index:', newIndex);
+        index = newIndex;
         loadDish(index);
       }
       startX = null;
