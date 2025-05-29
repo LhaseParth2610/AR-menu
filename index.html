@@ -1,33 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>AR Carousel with Dynamic Description & Controls</title>
-  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Swipe-able AR Menu with Drag and Buttons</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.js"></script>
   <style>
-    body, html {
-      margin: 0;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-    }
-
-    #debugPanel {
-      position: fixed;
-      bottom: 120px;
-      left: 0;
-      width: 100%;
-      max-height: 120px;
-      background: rgba(0, 0, 0, 0.7);
-      color: #0f0;
-      font-family: monospace;
-      font-size: 12px;
-      padding: 10px;
-      box-sizing: border-box;
-      overflow-y: auto;
-      z-index: 999;
-    }
-
+    body { margin:0; overflow:hidden; }
     .ui-button {
       position: fixed;
       top: 50%;
@@ -42,10 +21,8 @@
       opacity: 0.9;
       user-select: none;
     }
-
     #prevBtn { left: 10px; }
     #nextBtn { right: 10px; }
-
     #infoPanel {
       position: fixed;
       bottom: 10px;
@@ -68,171 +45,182 @@
 <body>
   <button id="prevBtn" class="ui-button">⬅</button>
   <button id="nextBtn" class="ui-button">➡</button>
-
   <div id="infoPanel"></div>
-  <div id="debugPanel">Debug log:</div>
 
-  <a-scene embedded arjs renderer="colorManagement: true; physicallyCorrectLights: true;">
-    <a-assets>
-      <a-asset-item id="pizzaModel" src="assets/dish3.glb"></a-asset-item>
-      <a-asset-item id="burgerModel" src="assets/dish1.glb"></a-asset-item>
-    </a-assets>
-
+  <a-scene embedded
+           arjs="trackingMethod: best; sourceType: webcam;"
+           vr-mode-ui="enabled: false"
+           renderer="logarithmicDepthBuffer: true;">
     <a-marker preset="hiro">
-      <a-entity id="pizzaEntity" gltf-model="#pizzaModel" scale="0.35 0.35 0.35" position="0 0 0.1" visible="true"></a-entity>
-      <a-entity id="burgerEntity" gltf-model="#burgerModel" scale="0.35 0.35 0.35" position="0 0 0.1" visible="false"></a-entity>
+      <a-entity id="dishModel" visible="false" scale="1 1 1" position="0 0 0" rotation="0 0 0"></a-entity>
     </a-marker>
-
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    const modelIds = ['pizzaEntity', 'burgerEntity'];
-    const descriptions = [
-      { title: "Pepperoni Pizza", price: "$12.99", details: "Classic pepperoni with mozzarella cheese and tomato sauce." },
-      { title: "Chicken Burger", price: "$9.99", details: "Juicy grilled chicken patty with fresh lettuce and mayo." }
+    const menu = [
+      { model: 'models/dish3.glb', title: 'Neapolitan Pizza', price: '₹749', details: 'Classic Neapolitan pizza with fresh ingredients.', offsetY: 0, scaleAdjust: 1 },
+      { model: 'models/dish2.glb', title: 'Chocolate Lava Cake', price: '₹249', details: 'Rich chocolate cake with a molten center.', offsetY: 0, scaleAdjust: 1 },
+      { model: 'models/dish1.glb', title: 'Classic Cheeseburger', price: '₹299', details: 'Juicy beef patty with cheese and fresh veggies.', offsetY: 0, scaleAdjust: 1 },
     ];
+    let index = 0;
+    let isLoading = false;
 
-    let currentIndex = 0;
-    let isDragging = false;
-    let lastMouseX = 0;
-    let lastMouseY = 0;
-    let flipState = false; // To track flip for each model (could be expanded)
+    const dishEntity = document.querySelector('#dishModel');
+    const infoPanel = document.getElementById('infoPanel');
 
-    const debug = (msg) => {
-      const panel = document.getElementById('debugPanel');
-      const timestamp = new Date().toLocaleTimeString();
-      panel.innerHTML += `<br><strong>[${timestamp}]</strong> ${msg}`;
-      panel.scrollTop = panel.scrollHeight;
-      console.log(msg);
-    };
+    function loadDish(i) {
+      if (isLoading) return;
+      isLoading = true;
 
-    function showModel(index) {
-      modelIds.forEach((id, i) => {
-        const el = document.getElementById(id);
-        if (el) el.setAttribute('visible', i === index);
+      // Update infoPanel immediately
+      const info = menu[i];
+      infoPanel.innerHTML = `<strong>${info.title}</strong><br>${info.details}<br><em>Price: ${info.price}</em>`;
+
+      // Hide until loaded
+      dishEntity.setAttribute('visible', 'false');
+
+      // Remove old model
+      dishEntity.removeObject3D('mesh');
+      dashEntity.removeAttribute('gltf-model');
+      dishEntity.setAttribute('scale', '1 1 1');
+      dishEntity.setAttribute('position', '0 0 0');
+      dishEntity.setAttribute('rotation', '0 0 0'); // Reset rotation
+
+      // Load new model
+      dishEntity.setAttribute('gltf-model', menu[i].model);
+
+      dishEntity.addEventListener('model-error', () => {
+        console.error('Failed to load model:', menu[i].model);
+        infoPanel.innerHTML = 'Error loading dish';
+        isLoading = false;
+      }, { once: true });
+
+      dishEntity.addEventListener('model-loaded', () => {
+        const mesh = dishEntity.getObject3D('mesh');
+        const bbox = new THREE.Box3().setFromObject(mesh);
+        const center = bbox.getCenter(new THREE.Vector3());
+        const min = bbox.min;
+        const size = bbox.getSize(new THREE.Vector3());
+        mesh.position.sub(center);
+
+        let s;
+        if (menu[i].calculatedScale) {
+          s = menu[i].calculatedScale;
+        } else {
+          const desiredHeight = 0.3;
+          s = (desiredHeight / size.y) * menu[i].scaleAdjust;
+          menu[i].calculatedScale = s;
+        }
+        dishEntity.setAttribute('scale', `${s} ${s} ${s}`);
+
+        const scaledMinY = min.y * s;
+        const yOffset = -scaledMinY + (menu[i].offsetY || 0);
+        dishEntity.setAttribute('position', `0 ${yOffset} 0`);
+
+        dishEntity.setAttribute('visible', 'true');
+        isLoading = false;
+      }, { once: true });
+    }
+
+    // Bind buttons for navigation
+    function bindButtons() {
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+
+      prevBtn.addEventListener('click', () => {
+        index = (index - 1 + menu.length) % menu.length;
+        loadDish(index);
       });
-      updateInfoPanel(index);
-      debug(`Model changed to index ${index} (${modelIds[index]})`);
-    }
 
-    function updateInfoPanel(index) {
-      const info = descriptions[index];
-      const panel = document.getElementById('infoPanel');
-      panel.innerHTML = `<strong>${info.title}</strong><br>${info.details}<br><em>Price: ${info.price}</em>`;
-    }
-
-    function bindHtmlButtons() {
-      const next = document.getElementById('nextBtn');
-      const prev = document.getElementById('prevBtn');
-
-      next.addEventListener('click', () => {
-        currentIndex = (currentIndex + 1) % modelIds.length;
-        resetModelTransform();
-        showModel(currentIndex);
-        debug('Next button clicked');
-      });
-
-      prev.addEventListener('click', () => {
-        currentIndex = (currentIndex - 1 + modelIds.length) % modelIds.length;
-        resetModelTransform();
-        showModel(currentIndex);
-        debug('Previous button clicked');
+      nextBtn.addEventListener('click', () => {
+        index = (index + 1) % menu.length;
+        loadDish(index);
       });
     }
 
-    // Reset rotation, scale, flip on model switch
-    function resetModelTransform() {
-      const model = document.getElementById(modelIds[currentIndex]);
-      if (model) {
-        model.setAttribute('rotation', {x:0, y:0, z:0});
-        model.setAttribute('scale', {x:0.35, y:0.35, z:0.35});
-        flipState = false;
-      }
-    }
-
-    function addModelInteraction() {
+    // Add drag functionality for rotation and zoom
+    function addDragFunctionality() {
       const scene = document.querySelector('a-scene');
-      let model = document.getElementById(modelIds[currentIndex]);
+      let isDragging = false;
+      let lastMouseX = 0;
+      let lastMouseY = 0;
 
-      let rotationY = 0;
-      let scale = 0.35;
-
-      function updateModelRef() {
-        model = document.getElementById(modelIds[currentIndex]);
-        rotationY = model.getAttribute('rotation').y || 0;
-        scale = model.getAttribute('scale').x || 0.35;
-      }
-
-      // Pointer down: start drag
       scene.addEventListener('pointerdown', (e) => {
         isDragging = true;
         lastMouseX = e.clientX;
         lastMouseY = e.clientY;
-        updateModelRef();
       });
 
-      // Pointer move: rotate/zoom
       scene.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
+        const model = document.querySelector('#dishModel');
         if (!model) return;
 
         const dx = e.clientX - lastMouseX;
         const dy = e.clientY - lastMouseY;
 
-        // Horizontal drag = rotate Y axis
-        rotationY += dx * 0.5; // sensitivity
-        model.setAttribute('rotation', {x:0, y:rotationY, z:0});
+        // Get current rotation and scale
+        const currentRotation = model.getAttribute('rotation');
+        const currentScale = model.getAttribute('scale');
 
-        // Vertical drag = zoom (scale)
-        scale += dy * -0.005;
-        scale = Math.min(Math.max(0.1, scale), 2); // clamp scale between 0.1 and 2
-        model.setAttribute('scale', {x: scale, y: scale, z: scale});
+        // Rotate Y axis
+        const rotationY = (currentRotation.y || 0) + dx * 0.5;
+        model.setAttribute('rotation', {x: 0, y: rotationY, z: 0});
+
+        // Zoom (scale)
+        const scaleFactor = currentScale.x + dy * -0.005;
+        const newScale = Math.min(Math.max(0.1, scaleFactor), 2);
+        model.setAttribute('scale', {x: newScale, y: newScale, z: newScale});
 
         lastMouseX = e.clientX;
         lastMouseY = e.clientY;
       });
 
-      // Pointer up: stop drag
       scene.addEventListener('pointerup', (e) => {
         isDragging = false;
       });
 
-      // Double click to flip model 180 degrees on Y axis
+      // Double click to flip the model
       scene.addEventListener('dblclick', (e) => {
-        model = document.getElementById(modelIds[currentIndex]);
+        const model = document.querySelector('#dishModel');
         if (!model) return;
-
-        rotationY = model.getAttribute('rotation').y || 0;
-        flipState = !flipState;
-        rotationY += 180; // flip by 180deg
-
+        const currentRotation = model.getAttribute('rotation');
+        const rotationY = (currentRotation.y || 0) + 180;
         model.setAttribute('rotation', {x: 0, y: rotationY, z: 0});
-        debug(`Model flipped ${flipState ? 'ON' : 'OFF'}`);
       });
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      bindHtmlButtons();
+    // Wait for scene and marker detection
+    const scene = document.querySelector('a-scene');
+    const marker = document.querySelector('a-marker');
+    scene.addEventListener('loaded', () => {
+      marker.addEventListener('markerFound', () => {
+        infoPanel.style.display = 'block';
+        loadDish(index);
+      }, { once: true });
 
-      const marker = document.getElementById('carouselMarker');
-      const infoPanel = document.getElementById('infoPanel');
-
-      if (marker) {
-        marker.addEventListener('markerFound', () => {
-          debug('Marker FOUND');
-          infoPanel.style.display = 'block';
-          showModel(currentIndex);
-        });
-
-        marker.addEventListener('markerLost', () => {
-          debug('Marker LOST');
-          infoPanel.style.display = 'none';
-        });
-      }
-
-      addModelInteraction();
+      marker.addEventListener('markerLost', () => {
+        infoPanel.style.display = 'none';
+      });
     });
+
+    // Swipe detection for navigation
+    let startX = null;
+    window.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+    window.addEventListener('touchend', e => {
+      if (startX === null || isLoading) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 50) {
+        index = (index + (dx < 0 ? 1 : -1) + menu.length) % menu.length;
+        loadDish(index);
+      }
+      startX = null;
+    });
+
+    // Initialize buttons and drag functionality
+    bindButtons();
+    addDragFunctionality();
   </script>
 </body>
 </html>
