@@ -1,234 +1,142 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Swipe-able AR Menu with Drag and Buttons</title>
+  <title>Swipe-able AR Menu (Fixed)</title>
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.js"></script>
   <style>
     body { margin:0; overflow:hidden; }
-    .ui-button {
-      position: fixed;
-      top: 50%;
-      transform: translateY(-50%);
-      padding: 15px 20px;
-      font-size: 24px;
-      color: white;
-      background-color: #ff9800;
-      border: none;
-      cursor: pointer;
-      z-index: 1000;
-      opacity: 0.9;
-      user-select: none;
+    #instructions {
+      position:absolute; top:10px; width:100%;
+      text-align:center; color:#fff;
+      font-family:sans-serif; text-shadow:0 0 5px #000;
+      z-index:1; opacity:0.8;
     }
-    #prevBtn { left: 10px; }
-    #nextBtn { right: 10px; }
-    #infoPanel {
-      position: fixed;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 152, 0, 0.9);
-      padding: 15px 25px;
-      border-radius: 8px;
-      font-size: 18px;
-      color: #111;
-      max-width: 300px;
-      text-align: center;
-      z-index: 1000;
-      user-select: none;
-      pointer-events: none;
-      display: none;
-    }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
   </style>
 </head>
 <body>
-  <button id="prevBtn" class="ui-button">⬅</button>
-  <button id="nextBtn" class="ui-button">➡</button>
-  <div id="infoPanel"></div>
+  <div id="instructions">Swipe ←/→ to browse dishes</div>
 
   <a-scene embedded
            arjs="trackingMethod: best; sourceType: webcam;"
            vr-mode-ui="enabled: false"
            renderer="logarithmicDepthBuffer: true;">
     <a-marker preset="hiro">
-      <a-entity id="dishModel" visible="false" scale="1 1 1" position="0 0 0" rotation="0 0 0"></a-entity>
+      <a-entity id="dishModel" visible="false" scale="1 1 1" position="0 0 0"></a-entity>
+      <a-plane id="labelBg" width="1.2" height="0.4" color="#000" opacity="0.6" position="0 0.8 0" rotation="-15 0 0" visible="false"></a-plane>
+      <a-text id="dishLabel" align="center" color="#FFD740" width="1" position="0 0.8 0" rotation="-15 0 0" visible="false" class="fade-in"></a-text>
     </a-marker>
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
     const menu = [
-      { model: 'models/dish3.glb', title: 'Neapolitan Pizza', price: '₹749', details: 'Classic Neapolitan pizza with fresh ingredients.', offsetY: 0, scaleAdjust: 1 },
-      { model: 'models/dish2.glb', title: 'Chocolate Lava Cake', price: '₹249', details: 'Rich chocolate cake with a molten center.', offsetY: 0, scaleAdjust: 1 },
-      { model: 'models/dish1.glb', title: 'Classic Cheeseburger', price: '₹299', details: 'Juicy beef patty with cheese and fresh veggies.', offsetY: 0, scaleAdjust: 1 },
+        { model: 'models/dish3.glb', label: 'Neapolitan Pizza\n₹749', offsetY: 0, scaleAdjust: 1 },
+        { model: 'models/dish2.glb', label: 'Chocolate Lava Cake\n₹249', offsetY: 0, scaleAdjust: 1 },
+      // { model: 'models/dish1.glb', label: 'Classic Cheeseburger\n₹299', offsetY: 0, scaleAdjust: 1 },
     ];
     let index = 0;
     let isLoading = false;
 
     const dishEntity = document.querySelector('#dishModel');
-    const infoPanel = document.getElementById('infoPanel');
+    const labelEntity = document.querySelector('#dishLabel');
+    const bgEntity = document.querySelector('#labelBg');
 
     function loadDish(i) {
       if (isLoading) return;
       isLoading = true;
 
-      // Update infoPanel immediately
-      const info = menu[i];
-      infoPanel.innerHTML = `<strong>${info.title}</strong><br>${info.details}<br><em>Price: ${info.price}</em>`;
-
       // Hide until loaded
       dishEntity.setAttribute('visible', 'false');
+      labelEntity.setAttribute('visible', 'false');
+      bgEntity.setAttribute('visible', 'false');
 
       // Remove old model
       dishEntity.removeObject3D('mesh');
-      dishEntity.removeAttribute('gltf-model'); // Fixed typo: was 'dashEntity'
+      dishEntity.removeAttribute('gltf-model');
       dishEntity.setAttribute('scale', '1 1 1');
       dishEntity.setAttribute('position', '0 0 0');
-      dishEntity.setAttribute('rotation', '0 0 0'); // Reset rotation
+
+      // Update label text and adjust background size
+      labelEntity.setAttribute('value', menu[i].label);
+      const textWidth = Math.min(1.8, menu[i].label.length * 0.05);
+      labelEntity.setAttribute('width', textWidth);
+      bgEntity.setAttribute('width', textWidth * 1.2);
+      bgEntity.setAttribute('height', menu[i].label.includes('\n') ? 0.4 : 0.3);
 
       // Load new model
       dishEntity.setAttribute('gltf-model', menu[i].model);
 
-      dishEntity.addEventListener('model-error', (event) => {
-        console.error('Failed to load model:', menu[i].model, event.detail);
-        infoPanel.innerHTML = 'Error loading dish';
+      dishEntity.addEventListener('model-error', () => {
+        console.error('Failed to load model:', menu[i].model);
+        labelEntity.setAttribute('value', 'Error loading dish');
+        labelEntity.setAttribute('visible', 'true');
+        bgEntity.setAttribute('visible', 'true');
         isLoading = false;
       }, { once: true });
 
       dishEntity.addEventListener('model-loaded', () => {
-        console.log('Model loaded successfully:', menu[i].model);
         const mesh = dishEntity.getObject3D('mesh');
         const bbox = new THREE.Box3().setFromObject(mesh);
         const center = bbox.getCenter(new THREE.Vector3());
         const min = bbox.min;
-        const size = bbox.getSize(new THREE.Vector3());
+        const max = bbox.max;
+        console.log('Model:', menu[i].model, 'Center:', center.x, center.y, center.z, 'Min:', min.x, min.y, min.z, 'Max:', max.x, max.y, max.z);
         mesh.position.sub(center);
 
-        let s;
-        if (menu[i].calculatedScale) {
-          s = menu[i].calculatedScale;
-        } else {
-          const desiredHeight = 0.3;
-          s = (desiredHeight / size.y) * menu[i].scaleAdjust;
-          menu[i].calculatedScale = s;
-        }
+        const size = bbox.getSize(new THREE.Vector3());
+        console.log('Size:', size.x, size.y, size.z);
+        const desiredMax = 0.5;
+        const actualMax = Math.max(size.x, size.y, size.z);
+        const s = (desiredMax / actualMax) * menu[i].scaleAdjust;
+        console.log('Scale factor:', s);
         dishEntity.setAttribute('scale', `${s} ${s} ${s}`);
 
-        const scaledMinY = min.y * s;
+        const scaledHeight = size.y * s;
+        const scaledMinY = min.y * s; // Base of model after scaling
+        console.log('Scaled height:', scaledHeight, 'Scaled min Y:', scaledMinY);
+        // Position model so base (min.y) is at y=0
         const yOffset = -scaledMinY + (menu[i].offsetY || 0);
         dishEntity.setAttribute('position', `0 ${yOffset} 0`);
 
+        // Position label above model, capped between 0.5 and 1.0
+        const labelHeight = Math.min(Math.max(scaledHeight + 0.3, 0.5), 1.0);
+        labelEntity.setAttribute('position', `0 ${labelHeight} 0`);
+        bgEntity.setAttribute('position', `0 ${labelHeight} 0`);
+
         dishEntity.setAttribute('visible', 'true');
-        console.log('Model set to visible with scale:', s, 'and position:', yOffset);
+        bgEntity.setAttribute('visible', 'true');
+        labelEntity.setAttribute('visible', 'true');
         isLoading = false;
       }, { once: true });
-    }
-
-    // Bind buttons for navigation
-    function bindButtons() {
-      const prevBtn = document.getElementById('prevBtn');
-      const nextBtn = document.getElementById('nextBtn');
-
-      prevBtn.addEventListener('click', () => {
-        console.log('Previous button clicked');
-        index = (index - 1 + menu.length) % menu.length;
-        loadDish(index);
-      });
-
-      nextBtn.addEventListener('click', () => {
-        console.log('Next button clicked');
-        index = (index + 1) % menu.length;
-        loadDish(index);
-      });
-    }
-
-    // Add drag functionality for rotation and zoom
-    function addDragFunctionality() {
-      const scene = document.querySelector('a-scene');
-       let isDragging = false;
-      let lastMouseX = 0;
-      let lastMouseY = 0;
-
-      scene.addEventListener('pointerdown', (e) => {
-        isDragging = true;
-        lastMouseX = e.clientX;
-        lastMouseY = e.clientY;
-      });
-
-      scene.addEventListener('pointermove', (e) => {
-        if (!isDragging) return;
-        const model = document.querySelector('#dishModel');
-        if (!model) return;
-
-        const dx = e.clientX - lastMouseX;
-        const dy = e.clientY - lastMouseY;
-
-        // Get current rotation and scale
-        const currentRotation = model.getAttribute('rotation');
-        const currentScale = model.getAttribute('scale');
-
-        // Rotate Y axis
-        const rotationY = (currentRotation.y || 0) + dx * 0.5;
-        model.setAttribute('rotation', {x: 0, y: rotationY, z: 0});
-
-        // Zoom (scale)
-        const scaleFactor = currentScale.x + dy * -0.005;
-        const newScale = Math.min(Math.max(0.1, scaleFactor), 2);
-        model.setAttribute('scale', {x: newScale, y: newScale, z: newScale});
-
-        lastMouseX = e.clientX;
-        lastMouseY = e.clientY;
-      });
-
-      scene.addEventListener('pointerup', (e) => {
-        isDragging = false;
-      });
-
-      // Double click to flip the model
-      scene.addEventListener('dblclick', (e) => {
-        const model = document.querySelector('#dishModel');
-        if (!model) return;
-        const currentRotation = model.getAttribute('rotation');
-        const rotationY = (currentRotation.y || 0) + 180;
-        model.setAttribute('rotation', {x: 0, y: rotationY, z: 0});
-      });
     }
 
     // Wait for scene and marker detection
     const scene = document.querySelector('a-scene');
     const marker = document.querySelector('a-marker');
     scene.addEventListener('loaded', () => {
+      // Ensure marker is detected before loading
       marker.addEventListener('markerFound', () => {
-        console.log('Marker found');
-        infoPanel.style.display = 'block';
         loadDish(index);
       }, { once: true });
-
-      marker.addEventListener('markerLost', () => {
-        console.log('Marker lost');
-        infoPanel.style.display = 'none';
-      });
     });
 
-    // Swipe detection for navigation
+    // Swipe detection
     let startX = null;
     window.addEventListener('touchstart', e => startX = e.touches[0].clientX);
     window.addEventListener('touchend', e => {
       if (startX === null || isLoading) return;
       const dx = e.changedTouches[0].clientX - startX;
       if (Math.abs(dx) > 50) {
-        const newIndex = (index + (dx < 0 ? 1 : -1) + menu.length) % menu.length;
-        console.log('Swipe detected, new index:', newIndex);
-        index = newIndex;
+        index = (index + (dx < 0 ? 1 : -1) + menu.length) % menu.length;
         loadDish(index);
       }
       startX = null;
     });
-
-    // Initialize buttons and drag functionality
-    bindButtons();
-    addDragFunctionality();
   </script>
 </body>
 </html>
