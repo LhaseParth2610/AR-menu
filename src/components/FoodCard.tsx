@@ -3,7 +3,7 @@ import { Eye, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"; // If using shadcn/ui
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import ARViewer from "@/components/ARViewer";
 
 interface FoodItem {
@@ -69,8 +69,24 @@ const FoodCard = ({ item }: FoodCardProps) => {
                 Expand to view in AR
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl p-4">
-              <ARViewer modelPath={item.modelPath} altText={item.name} />
+            <DialogContent className="max-w-3xl p-0 overflow-hidden">
+              <div className="flex flex-col h-[80vh]">
+                {/* Top half: AR Viewer */}
+                <div className="flex-1">
+                  <ARViewer modelPath={item.modelPath} altText={item.name} height="100%" />
+                </div>
+                {/* Bottom half: Details */}
+                <div className="p-4 bg-white border-t border-slate-200">
+                  <h3 className="font-semibold text-xl text-slate-900 mb-2">{item.name}</h3>
+                  <p className="text-slate-600 text-sm mb-4">{item.description}</p>
+                  <div className="flex flex-wrap gap-4 text-sm">
+                    <div className="flex items-center space-x-1"><span className="font-medium">Calories:</span> <span>{item.calories} cal</span></div>
+                    <div className="flex items-center space-x-1"><span className="font-medium">Serves:</span> <span>{item.serves}</span></div>
+                    <div className="flex items-center space-x-1"><span className="font-medium">Size:</span> <span>{item.size}</span></div>
+                    <div className="flex items-center space-x-1"><span className="font-medium">Type:</span> <Badge variant={item.type === "Veg" ? "default" : "destructive"} className={item.type === "Veg" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"}>{item.type}</Badge></div>
+                  </div>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
         </CardContent>
