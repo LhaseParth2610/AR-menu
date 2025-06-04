@@ -3,15 +3,61 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>AR Carousel with Normalized Models</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR View - TasteAR</title>
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     body,
     html {
       margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
       font-family: Arial, sans-serif;
+    }
+
+    #infoPanel {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 8px;
+      text-align: center;
+      z-index: 1000;
+      display: none;
+    }
+
+    #backButton {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 1000;
+      font-size: 16px;
+    }
+
+    #loadingMessage {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      z-index: 1000;
     }
 
     #debugPanel {
@@ -28,94 +74,60 @@
       box-sizing: border-box;
       overflow-y: auto;
       z-index: 999;
+      display: none; /* Hidden by default, can be toggled */
     }
 
-    .ui-button {
+    #resetButton {
       position: fixed;
-      top: 50%;
-      transform: translateY(-50%);
-      padding: 15px 20px;
-      font-size: 24px;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.7);
       color: white;
-      background-color: #ff9800;
       border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
       cursor: pointer;
       z-index: 1000;
-      opacity: 0.9;
-      user-select: none;
-    }
-
-    #prevBtn {
-      left: 10px;
-    }
-
-    #nextBtn {
-      right: 10px;
-    }
-
-    #infoPanel {
-      position: fixed;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 152, 0, 0.9);
-      padding: 15px 25px;
-      border-radius: 8px;
-      font-size: 18px;
-      color: #111;
-      max-width: 300px;
-      text-align: center;
-      z-index: 1000;
-      user-select: none;
-      pointer-events: none;
-      display: none;
+      font-size: 16px;
     }
   </style>
 </head>
 
 <body>
-  <button id="prevBtn" class="ui-button">⬅</button>
-  <button id="nextBtn" class="ui-button">➡</button>
+  <button id="backButton" onclick="goBack()">
+    <i class="fas fa-arrow-left"></i> Back to Menu
+  </button>
 
-  <div id="infoPanel"></div>
+  <button id="resetButton" onclick="resetModelTransform()">
+    <i class="fas fa-sync"></i> Reset View
+  </button>
+
+  <div id="infoPanel">
+    <h3 id="modelName"></h3>
+    <p>Point your camera at the marker</p>
+    <p>Drag to rotate • Double-click to flip</p>
+  </div>
+
+  <div id="loadingMessage">
+    Loading AR View...
+  </div>
+
   <div id="debugPanel">Debug log:</div>
 
-  <a-scene embedded arjs renderer="colorManagement: true; physicallyCorrectLights: true;">
-    <a-assets>
-      <a-asset-item id="dish1" src="assets/dish1.glb"></a-asset-item>
-      <a-asset-item id="dish2" src="assets/dish2.glb"></a-asset-item>
-      <a-asset-item id="dish3" src="assets/dish3.glb"></a-asset-item>
-      <a-asset-item id="dish4" src="assets/dish4.glb"></a-asset-item>
-      <a-asset-item id="dish5" src="assets/dish5.glb"></a-asset-item>
-    </a-assets>
-
-    <a-marker type="pattern" url="assets/marker.patt" id="carouselMarker">
-      <a-entity id="dish1Entity" gltf-model="#dish1" position="0 0 0.1" visible="true"></a-entity>
-      <a-entity id="dish2Entity" gltf-model="#dish2" position="0 0 0.1" visible="false"></a-entity>
-      <a-entity id="dish3Entity" gltf-model="#dish3" position="0 0 0.1" visible="false"></a-entity>
-      <a-entity id="dish4Entity" gltf-model="#dish4" position="0 0 0.1" visible="false"></a-entity>
-      <a-entity id="dish5Entity" gltf-model="#dish5" position="0 0 0.1" visible="false"></a-entity>
+  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+    <a-marker type="pattern" url="/static/assets/marker.patt">
+      <a-entity id="modelEntity" position="0 0 0.1" scale="1 1 1"></a-entity>
     </a-marker>
-
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    const modelIds = ['dish1Entity', 'dish2Entity', 'dish3Entity', 'dish4Entity', 'dish5Entity'];
-    const descriptions = [
-      { title: "Dish 1", price: "$10.99", details: "Description for dish 1." },
-      { title: "Dish 2", price: "$11.99", details: "Description for dish 2." },
-      { title: "Dish 3", price: "$12.99", details: "Description for dish 3." },
-      { title: "Dish 4", price: "$13.99", details: "Description for dish 4." },
-      { title: "Dish 5", price: "$14.99", details: "Description for dish 5." }
-    ];
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const modelPath = urlParams.get('model');
+    const modelName = urlParams.get('name');
 
-    let currentIndex = 0;
-    let isDragging = false;
-    let lastMouseX = 0;
-    let lastMouseY = 0;
-    let flipState = false;
-
+    // Debug logging function
     const debug = (msg) => {
       const panel = document.getElementById('debugPanel');
       const timestamp = new Date().toLocaleTimeString();
@@ -124,84 +136,67 @@
       console.log(msg);
     };
 
-    function showModel(index) {
-      modelIds.forEach((id, i) => {
-        const el = document.getElementById(id);
-        if (el) el.setAttribute('visible', i === index);
-      });
-      updateInfoPanel(index);
-      debug(`Model changed to index ${index} (${modelIds[index]})`);
+    // Update model name in info panel
+    if (modelName) {
+      document.getElementById('modelName').textContent = modelName;
     }
 
-    function updateInfoPanel(index) {
-      const info = descriptions[index];
-      const panel = document.getElementById('infoPanel');
-      panel.innerHTML = `<strong>${info.title}</strong><br>${info.details}<br><em>Price: ${info.price}</em>`;
-    }
-
-    function resetModelTransform() {
-      const model = document.getElementById(modelIds[currentIndex]);
-      if (model) {
-        model.setAttribute('rotation', { x: 0, y: 0, z: 0 });
-        flipState = false;
+    // Function to normalize model size
+    function normalizeModelSize(model, targetSize = 1) {
+      if (typeof THREE === 'undefined' || !model) {
+        console.warn("THREE.js or model element not available for normalization.");
+        return;
       }
-    }
 
-    function bindHtmlButtons() {
-      const next = document.getElementById('nextBtn');
-      const prev = document.getElementById('prevBtn');
-
-      next.addEventListener('click', () => {
-        currentIndex = (currentIndex + 1) % modelIds.length;
-        resetModelTransform();
-        showModel(currentIndex);
-        debug('Next button clicked');
-      });
-
-      prev.addEventListener('click', () => {
-        currentIndex = (currentIndex - 1 + modelIds.length) % modelIds.length;
-        resetModelTransform();
-        showModel(currentIndex);
-        debug('Previous button clicked');
-      });
-    }
-
-    function normalizeModelSize(model, targetSize = 1.5) {
       const mesh = model.getObject3D('mesh');
-      if (!mesh) return;
+      if (!mesh) {
+        console.warn("Mesh not found for normalization.");
+        return;
+      }
 
       const box = new THREE.Box3().setFromObject(mesh);
       const size = box.getSize(new THREE.Vector3());
       const maxDim = Math.max(size.x, size.y, size.z);
+      if (maxDim === 0) {
+        console.warn("Model dimensions are zero, cannot normalize.");
+        return;
+      }
+
       const scaleFactor = targetSize / maxDim;
-
-      model.setAttribute('scale', {
-        x: scaleFactor,
-        y: scaleFactor,
-        z: scaleFactor
-      });
-
-      debug(`Normalized model: ${model.id} with scale factor: ${scaleFactor.toFixed(3)}`);
+      model.setAttribute('scale', { x: scaleFactor, y: scaleFactor, z: scaleFactor });
+      debug(`Normalized model with scale factor: ${scaleFactor.toFixed(3)}`);
     }
 
+    // Model interaction variables
+    let isDragging = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+    let rotationX = 0;
+    let rotationY = 0;
+    let flipState = false;
+
+    // Function to reset model transform
+    function resetModelTransform() {
+      const model = document.getElementById('modelEntity');
+      if (model) {
+        model.setAttribute('rotation', { x: 0, y: 0, z: 0 });
+        rotationX = 0;
+        rotationY = 0;
+        flipState = false;
+        debug('Model transform reset');
+      }
+    }
+
+    // Add model interaction
     function addModelInteraction() {
       const scene = document.querySelector('a-scene');
-      let model = document.getElementById(modelIds[currentIndex]);
-      let rotationX = 0;
-      let rotationY = 0;
-
-      function updateModelRef() {
-        model = document.getElementById(modelIds[currentIndex]);
-        const rot = model.getAttribute('rotation') || { x: 0, y: 0, z: 0 };
-        rotationX = rot.x;
-        rotationY = rot.y;
-      }
+      const model = document.getElementById('modelEntity');
 
       scene.addEventListener('pointerdown', (e) => {
         isDragging = true;
         lastMouseX = e.clientX;
         lastMouseY = e.clientY;
-        updateModelRef();
+        debug('Started dragging');
       });
 
       scene.addEventListener('pointermove', (e) => {
@@ -210,8 +205,8 @@
         const dx = e.clientX - lastMouseX;
         const dy = e.clientY - lastMouseY;
 
-        rotationY += dx * 0.5; // horizontal drag → rotate Y
-        rotationX -= dy * 0.5; // vertical drag → rotate X
+        rotationY += dx * 0.5;
+        rotationX -= dy * 0.5;
 
         model.setAttribute('rotation', {
           x: rotationX,
@@ -225,50 +220,64 @@
 
       scene.addEventListener('pointerup', () => {
         isDragging = false;
+        debug('Stopped dragging');
       });
 
       scene.addEventListener('dblclick', () => {
-        model = document.getElementById(modelIds[currentIndex]);
         if (!model) return;
-        const currentRot = model.getAttribute('rotation') || { x: 0, y: 0, z: 0 };
         flipState = !flipState;
         model.setAttribute('rotation', {
-          x: currentRot.x,
-          y: currentRot.y + 180,
-          z: currentRot.z
+          x: rotationX,
+          y: rotationY + 180,
+          z: 0
         });
         debug(`Model flipped ${flipState ? 'ON' : 'OFF'}`);
       });
     }
 
-
-    window.addEventListener('DOMContentLoaded', () => {
-      bindHtmlButtons();
-
-      modelIds.forEach(id => {
-        const entity = document.getElementById(id);
-        entity.addEventListener('model-loaded', () => {
-          normalizeModelSize(entity, 1);
+    // Load the model when the scene is ready
+    document.querySelector('a-scene').addEventListener('loaded', function () {
+      const modelEntity = document.getElementById('modelEntity');
+      if (modelPath) {
+        modelEntity.setAttribute('gltf-model', '/static/' + modelPath);
+        
+        // Listen for model load to normalize size
+        modelEntity.addEventListener('model-loaded', function onModelLoaded() {
+          debug('Model loaded successfully');
+          normalizeModelSize(modelEntity, 1);
+          document.getElementById('loadingMessage').style.display = 'none';
+          document.getElementById('infoPanel').style.display = 'block';
+          addModelInteraction(); // Add interaction after model is loaded
+          modelEntity.removeEventListener('model-loaded', onModelLoaded);
         });
-      });
-
-      const marker = document.getElementById('carouselMarker');
-      const infoPanel = document.getElementById('infoPanel');
-
-      if (marker) {
-        marker.addEventListener('markerFound', () => {
-          debug('Marker FOUND');
-          infoPanel.style.display = 'block';
-          showModel(currentIndex);
-        });
-
-        marker.addEventListener('markerLost', () => {
-          debug('Marker LOST');
-          infoPanel.style.display = 'none';
-        });
+      } else {
+        console.error('No model path provided');
+        document.getElementById('loadingMessage').textContent = 'Error: No model specified';
       }
+    });
 
-      addModelInteraction();
+    // Handle marker found/lost events
+    const marker = document.querySelector('a-marker');
+    marker.addEventListener('markerFound', () => {
+      document.getElementById('infoPanel').style.display = 'none';
+      debug('Marker found');
+    });
+    marker.addEventListener('markerLost', () => {
+      document.getElementById('infoPanel').style.display = 'block';
+      debug('Marker lost');
+    });
+
+    // Back button function
+    function goBack() {
+      window.history.back();
+    }
+
+    // Toggle debug panel with 'D' key
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'd') {
+        const debugPanel = document.getElementById('debugPanel');
+        debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+      }
     });
   </script>
 </body>

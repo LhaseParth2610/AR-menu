@@ -1,7 +1,8 @@
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template
 import os
 
-app = Flask(__name__, 
+app = Flask(
+    __name__, 
     static_folder='static',
     template_folder='templates'
 )
@@ -17,10 +18,6 @@ def menu():
 @app.route('/fullar')
 def fullar():
     return render_template('fullar.html')
-
-@app.route('/static/<path:path>')
-def serve_static(path):
-    return send_from_directory('static', path)
 
 # Only run the development server if this file is run directly
 if __name__ == '__main__':

@@ -78,7 +78,8 @@ const menuData = {
             calories: "280 cal per slice",
             prepTime: "20 mins",
             ingredients: ["Mozzarella", "Fresh Basil", "Tomato Sauce", "Olive Oil"],
-            icon: "🍕"
+            icon: "🍕",
+            modelPath: "models/dish4.glb"
         },
         {
             id: 7,
@@ -90,7 +91,8 @@ const menuData = {
             calories: "320 cal per slice",
             prepTime: "20 mins",
             ingredients: ["Pepperoni", "Mozzarella", "Pizza Sauce", "Italian Herbs"],
-            icon: "🍕"
+            icon: "🍕",
+            modelPath: "models/dish4.glb"
         },
         {
             id: 8,
@@ -102,7 +104,8 @@ const menuData = {
             calories: "260 cal per slice",
             prepTime: "22 mins",
             ingredients: ["Bell Peppers", "Mushrooms", "Olives", "Onions", "Cheese"],
-            icon: "🍕"
+            icon: "🍕",
+            modelPath: "models/dish4.glb"
         }
     ],
     burgers: [
@@ -116,7 +119,8 @@ const menuData = {
             calories: "650 cal",
             prepTime: "15 mins",
             ingredients: ["Beef Patty", "Cheese", "Lettuce", "Tomato", "Special Sauce"],
-            icon: "🍔"
+            icon: "🍔",
+            modelPath: "models/dish4.glb"
         },
         {
             id: 10,
@@ -128,7 +132,8 @@ const menuData = {
             calories: "580 cal",
             prepTime: "18 mins",
             ingredients: ["Chicken Breast", "Avocado", "Bacon", "Chipotle Mayo"],
-            icon: "🍔"
+            icon: "🍔",
+            modelPath: "models/dish4.glb"
         },
         {
             id: 11,
@@ -140,7 +145,8 @@ const menuData = {
             calories: "420 cal",
             prepTime: "15 mins",
             ingredients: ["Plant Patty", "Lettuce", "Tomato", "Herb Mayo"],
-            icon: "🍔"
+            icon: "🍔",
+            modelPath: "models/dish4.glb"
         }
     ],
     beverages: [
@@ -154,7 +160,8 @@ const menuData = {
             calories: "110 cal",
             prepTime: "3 mins",
             ingredients: ["Fresh Oranges"],
-            icon: "🧃"
+            icon: "🧃",
+            modelPath: "models/dish4.glb"
         },
         {
             id: 13,
@@ -166,7 +173,8 @@ const menuData = {
             calories: "5 cal",
             prepTime: "2 mins",
             ingredients: ["Coffee Beans"],
-            icon: "☕"
+            icon: "☕",
+            modelPath: "models/dish4.glb"
         },
         {
             id: 14,
@@ -178,7 +186,8 @@ const menuData = {
             calories: "180 cal",
             prepTime: "5 mins",
             ingredients: ["Mango", "Yogurt", "Honey"],
-            icon: "🥤"
+            icon: "🥤",
+            modelPath: "models/dish4.glb"
         }
     ],
     desserts: [
