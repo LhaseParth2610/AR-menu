@@ -1,5 +1,3 @@
-*menu-script.js*
-
 // Menu page functionality
 let currentCategory = 'bestsellers';
 // let scene, camera, renderer; // Three.js variables - assuming these are not needed for current menu display
