@@ -11,8 +11,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add smooth entrance animations
     setTimeout(() => {
-        document.querySelector('.category-sidebar').style.opacity = '1';
-        document.querySelector('.menu-content').style.opacity = '1';
+        const sidebar = document.querySelector('.category-sidebar');
+        const content = document.querySelector('.menu-content');
+        if (sidebar) sidebar.style.opacity = '1';
+        if (content) content.style.opacity = '1';
     }, 300);
 });
 
@@ -223,7 +225,7 @@ function openARView() {
 
 // Navigation functions
 function goBack() {
-    window.location.href = 'index.html';
+    window.location.href = './index.html';
 }
 
 function openSettings() {

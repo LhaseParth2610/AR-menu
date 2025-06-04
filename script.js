@@ -11,7 +11,8 @@ function closeSettings() {
 }
 
 function openMenu() {
-    window.location.href = 'menu.html';
+    // Check if menu.html exists, if not redirect to the correct path
+    window.location.href = './menu.html';
 }
 
 // Close modal when clicking outside of it
