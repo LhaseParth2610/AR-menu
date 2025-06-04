@@ -1,4 +1,3 @@
-
 // Home page functionality
 function openSettings() {
     document.getElementById('settingsModal').style.display = 'block';
@@ -11,8 +10,7 @@ function closeSettings() {
 }
 
 function openMenu() {
-    // Check if menu.html exists, if not redirect to the correct path
-    window.location.href = './menu.html';
+    window.location.href = '/menu';
 }
 
 // Close modal when clicking outside of it
