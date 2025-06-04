@@ -8,6 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <!-- Add AR.js and A-Frame -->
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
     <style>
         .food-3d-viewer {
             width: 100%;
@@ -49,6 +52,76 @@
         .loading-3d.hidden {
             opacity: 0;
             pointer-events: none; /* Prevent interaction when hidden */
+        }
+
+        /* New styles for carousel navigation buttons */
+        .carousel-nav-button {
+            position: absolute;
+            top: 25vh; /* Position vertically centered relative to 3D viewer height */
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            z-index: 10; /* Ensure buttons are above the model but below loading */
+            border-radius: 5px;
+             transition: background-color 0.3s ease;
+        }
+
+         .carousel-nav-button:hover {
+             background-color: rgba(0, 0, 0, 0.7);
+         }
+
+        #prevItemBtn {
+            left: 10px;
+        }
+
+        #nextItemBtn {
+            right: 10px;
+        }
+
+        /* Ensure buttons are hidden when modal is not block */
+        .food-modal .carousel-nav-button {
+             display: none; /* Initially hidden */
+        }
+
+         .food-modal.is-visible .carousel-nav-button {
+             display: block; /* Show when modal is visible */
+         }
+
+        /* AR View Styles */
+        #arView {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            display: none;
+        }
+
+        #arView.active {
+            display: block;
+        }
+
+        .ar-back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .ar-back-btn.active {
+            display: block;
         }
     </style>
 </head>
@@ -126,6 +199,9 @@
                                     <p>Loading 3D Model...</p>
                                 </div>
                             </model-viewer>
+                            <!-- Carousel Navigation Buttons -->
+                            <button id="prevItemBtn" class="carousel-nav-button"><i class="fas fa-chevron-left"></i></button>
+                            <button id="nextItemBtn" class="carousel-nav-button"><i class="fas fa-chevron-right"></i></button>
                         </div>
                         <button class="ar-view-btn" onclick="openARView()">
                             <i class="fas fa-cube"></i>
@@ -203,6 +279,19 @@
         </div>
     </div>
 
+    <!-- Add AR View Container -->
+    <div id="arView">
+        <button class="ar-back-btn" onclick="exitARView()">
+            <i class="fas fa-arrow-left"></i> Back to Menu
+        </button>
+        <a-scene embedded arjs renderer="colorManagement: true; physicallyCorrectLights: true;">
+            <a-marker type="pattern" url="assets/marker.patt" id="arMarker">
+                <a-entity id="arModel" position="0 0 0.1" scale="1 1 1"></a-entity>
+            </a-marker>
+            <a-entity camera></a-entity>
+        </a-scene>
+    </div>
+
     <script src="menu-data.js"></script>
     <script src="menu-script.js"></script>
     <script>
@@ -227,6 +316,120 @@
             console.log('Model source changing...'); // Add this line
             loadingDiv.classList.remove('hidden');
         });
+
+        // Get the modal element
+        const foodDetailModal = document.getElementById('foodDetailModal');
+
+        // Observe when the modal becomes visible (display: block)
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach(mutation => {
+                if (mutation.attributeName === 'style') {
+                    if (foodDetailModal.style.display === 'block') {
+                        foodDetailModal.classList.add('is-visible');
+                    } else {
+                        foodDetailModal.classList.remove('is-visible');
+                    }
+                }
+            });
+        });
+
+        observer.observe(foodDetailModal, { attributes: true });
+
+    </script>
+     <script>
+        // Attach event listeners to the carousel buttons AFTER they are added to the DOM
+        document.addEventListener('DOMContentLoaded', () => {
+             const prevBtn = document.getElementById('prevItemBtn');
+             const nextBtn = document.getElementById('nextItemBtn');
+
+             if (prevBtn) {
+                 prevBtn.addEventListener('click', navigatePreviousItem);
+             }
+             if (nextBtn) {
+                 nextBtn.addEventListener('click', navigateNextItem);
+             }
+        });
+    </script>
+    <script>
+        // AR View Functions
+        let isDragging = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        let rotationX = 0;
+        let rotationY = 0;
+
+        function openARView() {
+            const arView = document.getElementById('arView');
+            const backBtn = document.querySelector('.ar-back-btn');
+            const arModel = document.getElementById('arModel');
+            const currentModel = document.getElementById('foodModel');
+            
+            // Get the current model's source
+            const modelSrc = currentModel.src;
+            if (!modelSrc) {
+                console.error('No model source available');
+                return;
+            }
+
+            // Set up AR model
+            arModel.setAttribute('gltf-model', modelSrc);
+            
+            // Show AR view
+            arView.classList.add('active');
+            backBtn.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Add model interaction
+            const scene = document.querySelector('a-scene');
+            
+            scene.addEventListener('pointerdown', (e) => {
+                isDragging = true;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            });
+
+            scene.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+
+                const dx = e.clientX - lastMouseX;
+                const dy = e.clientY - lastMouseY;
+
+                rotationY += dx * 0.5;
+                rotationX -= dy * 0.5;
+
+                arModel.setAttribute('rotation', {
+                    x: rotationX,
+                    y: rotationY,
+                    z: 0
+                });
+
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            });
+
+            scene.addEventListener('pointerup', () => {
+                isDragging = false;
+            });
+
+            // Double click to flip model
+            scene.addEventListener('dblclick', () => {
+                const currentRot = arModel.getAttribute('rotation') || { x: 0, y: 0, z: 0 };
+                arModel.setAttribute('rotation', {
+                    x: currentRot.x,
+                    y: currentRot.y + 180,
+                    z: currentRot.z
+                });
+            });
+        }
+
+        function exitARView() {
+            const arView = document.getElementById('arView');
+            const backBtn = document.querySelector('.ar-back-btn');
+            
+            arView.classList.remove('active');
+            backBtn.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
     </script>
 </body>
 </html> 

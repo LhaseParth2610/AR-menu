@@ -1,12 +1,14 @@
 // Menu page functionality
 let currentCategory = 'bestsellers';
-let scene, camera, renderer;
+// let scene, camera, renderer; // Three.js variables - assuming these are not needed for current menu display
+let currentItemId = null; // Variable to store the ID of the currently displayed item
 
 // Initialize the menu page
 document.addEventListener('DOMContentLoaded', function() {
     loadCategory(currentCategory);
     setupCategoryNavigation();
-    animate3DScene();
+    // Check if init3DViewer or animate3DScene are still relevant or can be removed.
+    // Assuming Three.js specific setup is no longer required for the menu list view.
     
     // Add smooth entrance animations
     setTimeout(() => {
@@ -37,8 +39,8 @@ function loadCategory(category) {
     // Clear existing items
     menuGrid.innerHTML = '';
     
-    // Add loading animation
-    menuGrid.innerHTML = '<div class="loading">Loading delicious items...</div>';
+    // Add loading animation (Optional - re-add if desired)
+    // menuGrid.innerHTML = '<div class="loading">Loading delicious items...</div>'; 
     
     setTimeout(() => {
         menuGrid.innerHTML = '';
@@ -112,9 +114,17 @@ function openFoodDetail(itemId) {
     const item = findFoodItem(itemId);
     if (!item) return;
 
-    // Update model viewer
+    currentItemId = itemId; // Store the current item ID here
+
+    // Update model viewer (assuming model-viewer element exists in menu.html modal)
     const modelViewer = document.getElementById('foodModel');
-    modelViewer.src = item.modelPath;
+    if (modelViewer && item.modelPath) {
+         modelViewer.src = '/static/' + item.modelPath; // Use the correct static path
+    } else if (modelViewer) {
+        // Handle case where item has no model path
+        modelViewer.src = ''; // Clear model viewer
+         console.warn(`Item with ID ${itemId} has no modelPath.`);
+    }
 
     // Update food information
     document.getElementById('foodDetailName').textContent = item.name;
@@ -144,88 +154,47 @@ function openFoodDetail(itemId) {
 function closeFoodDetail() {
     document.getElementById('foodDetailModal').style.display = 'none';
     document.body.style.overflow = 'auto';
+     currentItemId = null; // Clear current item ID when modal closes
 }
 
-// Function to find food item by ID
-function findFoodItem(id) {
+// Function to find food item by ID across all categories
+function findFoodItem(idToFind) {
+    // Ensure idToFind is a number for strict comparison
+     const numericalId = parseInt(idToFind, 10);
+     if (isNaN(numericalId)) return null; // Return null if ID is not a valid number
+
     for (const category in menuData) {
-        const item = menuData[category].find(item => item.id === id);
+        // Use strict equality (===) for comparison
+        const item = menuData[category].find(item => item.id === numericalId);
         if (item) return item;
     }
     return null;
 }
 
-// Initialize 3D viewer
-function init3DViewer(item) {
-    const container = document.getElementById('food3D');
-    
-    // Clear existing content
-    container.innerHTML = '';
-    
-    // Create a simple 3D representation
-    const viewer = document.createElement('div');
-    viewer.style.cssText = `
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 64px;
-        background: linear-gradient(45deg, #ff6b35, #f7931e);
-        border-radius: 15px;
-        color: white;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        animation: rotate3d 6s ease-in-out infinite;
-    `;
-    
-    viewer.textContent = item.icon;
-    container.appendChild(viewer);
-    
-    // Add 3D rotation animation
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes rotate3d {
-            0%, 100% { transform: rotateY(0deg) rotateX(0deg); }
-            25% { transform: rotateY(90deg) rotateX(0deg); }
-            50% { transform: rotateY(180deg) rotateX(10deg); }
-            75% { transform: rotateY(270deg) rotateX(0deg); }
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-// Animate 3D scene
-function animate3DScene() {
-    // This would be where Three.js animation would go
-    // For now, we'll use CSS animations for the food icons
-    setInterval(() => {
-        const foodIcons = document.querySelectorAll('.food-icon');
-        foodIcons.forEach(icon => {
-            if (!icon.style.animation) {
-                icon.style.animation = 'float 3s ease-in-out infinite';
-            }
-        });
-    }, 1000);
-}
-
 // Function to open AR view
 function openARView() {
-    const modelViewer = document.getElementById('foodModel');
-    modelViewer.activateAR();
+    // Check if an item is currently selected
+    if (currentItemId !== null) {
+        // Redirect to fullar.html with the current item ID as a query parameter
+        window.location.href = `/fullar?itemId=${currentItemId}`;
+    } else {
+        console.error("No food item selected for AR view.");
+        // Optionally, display a message to the user in the UI
+    }
 }
 
-// Function to go back
+// Function to go back (likely used on fullar.html or similar)
 function goBack() {
     window.history.back();
 }
 
-// Function to open settings
+// Function to open settings modal
 function openSettings() {
     document.getElementById('settingsModal').style.display = 'block';
     document.body.style.overflow = 'hidden';
 }
 
-// Function to close settings
+// Function to close settings modal
 function closeSettings() {
     document.getElementById('settingsModal').style.display = 'none';
     document.body.style.overflow = 'auto';
@@ -247,8 +216,15 @@ window.onclick = function(event) {
 // Close modals with escape key
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
-        closeFoodDetail();
-        closeSettings();
+        // Check if any modal is open before closing
+        const foodModal = document.getElementById('foodDetailModal');
+        const settingsModal = document.getElementById('settingsModal');
+        
+        if (foodModal.style.display === 'block') {
+             closeFoodDetail();
+        } else if (settingsModal.style.display === 'block') {
+             closeSettings();
+        }
     }
 });
 
@@ -303,3 +279,54 @@ if ('serviceWorker' in navigator) {
         console.log('Service worker support detected');
     });
 }
+
+// --- Modal Carousel Functionality --- (New) --- 
+
+// Function to get all food items in the current category
+function getCurrentCategoryItems() {
+    return menuData[currentCategory] || [];
+}
+
+// Function to find the index of an item within its category
+function findItemIndexInCategory(itemId) {
+    const items = getCurrentCategoryItems();
+    // Ensure strict comparison with number type
+    return items.findIndex(item => item.id === parseInt(itemId, 10));
+}
+
+// Function to navigate to the next item in the modal
+function navigateNextItem() {
+    const items = getCurrentCategoryItems();
+    // Use strict comparison for null
+    if (items.length === 0 || currentItemId === null) return;
+
+    // Ensure currentItemId is treated as a number
+    let currentIndex = findItemIndexInCategory(currentItemId);
+     if (currentIndex === -1) {
+         console.warn(`Current item ID ${currentItemId} not found in category ${currentCategory}.`);
+         return; // Should not happen if logic is correct
+     }
+
+    const nextIndex = (currentIndex + 1) % items.length;
+    openFoodDetail(items[nextIndex].id); // Open the detail for the next item
+}
+
+// Function to navigate to the previous item in the modal
+function navigatePreviousItem() {
+    const items = getCurrentCategoryItems();
+    // Use strict comparison for null
+    if (items.length === 0 || currentItemId === null) return;
+
+     // Ensure currentItemId is treated as a number
+    let currentIndex = findItemIndexInCategory(currentItemId);
+     if (currentIndex === -1) {
+          console.warn(`Current item ID ${currentItemId} not found in category ${currentCategory}.`);
+          return; // Should not happen
+     }
+
+    const previousIndex = (currentIndex - 1 + items.length) % items.length; // Handle wrap around
+    openFoodDetail(items[previousIndex].id); // Open the detail for the previous item
+}
+
+// You'll need to add buttons or swipe listeners in menu.html
+// to call navigateNextItem() and navigatePreviousItem()

@@ -14,9 +14,10 @@ def index():
 def menu():
     return render_template('menu.html')
 
+@app.route('/fullar')
+def fullar():
+    return render_template('fullar.html')
+
 @app.route('/<path:path>')
 def serve_static(path):
     return send_from_directory('static', path)
-
-if __name__ == '__main__':
-    app.run(debug=True)
