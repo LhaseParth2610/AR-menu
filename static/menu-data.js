@@ -1,47 +1,75 @@
-
 // Menu data structure
 const menuData = {
     bestsellers: [
         {
             id: 1,
-            name: "Signature Burger",
-            description: "Our famous double-patty burger with special sauce, fresh lettuce, and premium cheese",
-            price: "$12.99",
+            name: "Classic Cheeseburger",
+            description: "Juicy chicken patty, cheddar, lettuce & special sauce",
+            price: "₹299",
             type: "non-veg",
             serves: "1-2 people",
             calories: "650 cal",
             prepTime: "15 mins",
-            ingredients: ["Beef Patty", "Cheese", "Lettuce", "Tomato", "Special Sauce"],
-            icon: "🍔"
+            ingredients: ["Chicken Patty", "Cheddar", "Lettuce", "Special Sauce"],
+            icon: "🍔",
+            modelPath: "models/dish1.glb"
         },
         {
             id: 2,
-            name: "Margherita Pizza",
-            description: "Classic Italian pizza with fresh mozzarella, basil, and our homemade tomato sauce",
-            price: "$14.99",
+            name: "Veggie Delight Burger",
+            description: "Grilled chickpea patty, avocado, spinach & aioli",
+            price: "₹249",
             type: "veg",
-            serves: "2-3 people",
-            calories: "280 cal per slice",
-            prepTime: "20 mins",
-            ingredients: ["Mozzarella", "Fresh Basil", "Tomato Sauce", "Olive Oil"],
-            icon: "🍕"
+            serves: "1-2 people",
+            calories: "420 cal",
+            prepTime: "15 mins",
+            ingredients: ["Chickpea Patty", "Avocado", "Spinach", "Aioli"],
+            icon: "🍔",
+            modelPath: "models/dish2.glb"
         },
         {
             id: 3,
-            name: "Chocolate Lava Cake",
-            description: "Decadent chocolate cake with a molten chocolate center, served warm",
-            price: "$7.99",
+            name: "Veggie Corn Burger",
+            description: "Grilled corn patty, avocado, spinach & aioli",
+            price: "₹449",
             type: "veg",
             serves: "1-2 people",
-            calories: "450 cal",
-            prepTime: "12 mins",
-            ingredients: ["Dark Chocolate", "Butter", "Eggs", "Flour", "Sugar"],
-            icon: "🍰"
+            calories: "380 cal",
+            prepTime: "18 mins",
+            ingredients: ["Corn Patty", "Avocado", "Spinach", "Aioli"],
+            icon: "🍔",
+            modelPath: "models/dish3.glb"
         }
     ],
     pizza: [
         {
             id: 4,
+            name: "Desert",
+            description: "Grilled corn patty, avocado, spinach & aioli",
+            price: "₹249",
+            type: "veg",
+            serves: "1-2 people",
+            calories: "320 cal",
+            prepTime: "12 mins",
+            ingredients: ["Corn Patty", "Avocado", "Spinach", "Aioli"],
+            icon: "🍕",
+            modelPath: "models/dish4.glb"
+        },
+        {
+            id: 5,
+            name: "Italian style Pizza",
+            description: "Grilled corn patty, avocado, spinach & aioli",
+            price: "₹649",
+            type: "veg",
+            serves: "2-3 people",
+            calories: "280 cal",
+            prepTime: "20 mins",
+            ingredients: ["Corn Patty", "Avocado", "Spinach", "Aioli"],
+            icon: "🍕",
+            modelPath: "models/dish5.glb"
+        },
+        {
+            id: 6,
             name: "Margherita Pizza",
             description: "Classic Italian pizza with fresh mozzarella, basil, and our homemade tomato sauce",
             price: "$14.99",
@@ -53,7 +81,7 @@ const menuData = {
             icon: "🍕"
         },
         {
-            id: 5,
+            id: 7,
             name: "Pepperoni Supreme",
             description: "Loaded with premium pepperoni, mozzarella cheese, and our signature pizza sauce",
             price: "$16.99",
@@ -65,7 +93,7 @@ const menuData = {
             icon: "🍕"
         },
         {
-            id: 6,
+            id: 8,
             name: "Veggie Deluxe",
             description: "Fresh vegetables including bell peppers, mushrooms, olives, and onions",
             price: "$15.99",
@@ -79,7 +107,7 @@ const menuData = {
     ],
     burgers: [
         {
-            id: 7,
+            id: 9,
             name: "Signature Burger",
             description: "Our famous double-patty burger with special sauce, fresh lettuce, and premium cheese",
             price: "$12.99",
@@ -91,7 +119,7 @@ const menuData = {
             icon: "🍔"
         },
         {
-            id: 8,
+            id: 10,
             name: "Chicken Deluxe",
             description: "Crispy chicken breast with avocado, bacon, and chipotle mayo",
             price: "$11.99",
@@ -103,7 +131,7 @@ const menuData = {
             icon: "🍔"
         },
         {
-            id: 9,
+            id: 11,
             name: "Veggie Burger",
             description: "Plant-based patty with fresh vegetables and herb mayo",
             price: "$10.99",
@@ -117,7 +145,7 @@ const menuData = {
     ],
     beverages: [
         {
-            id: 10,
+            id: 12,
             name: "Fresh Orange Juice",
             description: "Freshly squeezed orange juice with no added sugar",
             price: "$4.99",
@@ -129,7 +157,7 @@ const menuData = {
             icon: "🧃"
         },
         {
-            id: 11,
+            id: 13,
             name: "Espresso",
             description: "Rich, bold espresso shot made from premium coffee beans",
             price: "$3.99",
@@ -141,7 +169,7 @@ const menuData = {
             icon: "☕"
         },
         {
-            id: 12,
+            id: 14,
             name: "Mango Smoothie",
             description: "Creamy mango smoothie with fresh fruit and yogurt",
             price: "$5.99",
@@ -155,7 +183,7 @@ const menuData = {
     ],
     desserts: [
         {
-            id: 13,
+            id: 15,
             name: "Chocolate Lava Cake",
             description: "Decadent chocolate cake with a molten chocolate center, served warm",
             price: "$7.99",
@@ -164,10 +192,11 @@ const menuData = {
             calories: "450 cal",
             prepTime: "12 mins",
             ingredients: ["Dark Chocolate", "Butter", "Eggs", "Flour", "Sugar"],
-            icon: "🍰"
+            icon: "🍰",
+            modelPath: "models/dish4.glb"
         },
         {
-            id: 14,
+            id: 16,
             name: "Tiramisu",
             description: "Classic Italian dessert with coffee-soaked ladyfingers and mascarpone",
             price: "$6.99",
@@ -176,10 +205,11 @@ const menuData = {
             calories: "380 cal",
             prepTime: "5 mins",
             ingredients: ["Mascarpone", "Coffee", "Ladyfingers", "Cocoa"],
-            icon: "🍰"
+            icon: "🍰",
+            modelPath: "models/dish4.glb"
         },
         {
-            id: 15,
+            id: 17,
             name: "Ice Cream Sundae",
             description: "Vanilla ice cream with chocolate sauce, nuts, and a cherry on top",
             price: "$5.99",
@@ -188,7 +218,8 @@ const menuData = {
             calories: "320 cal",
             prepTime: "3 mins",
             ingredients: ["Vanilla Ice Cream", "Chocolate Sauce", "Nuts", "Cherry"],
-            icon: "🍨"
+            icon: "🍨",
+            modelPath: "models/dish4.glb"
         }
     ]
 };

@@ -1,4 +1,3 @@
-
 // Menu page functionality
 let currentCategory = 'bestsellers';
 let scene, camera, renderer;
@@ -84,7 +83,7 @@ function createFoodCard(item) {
     `;
     
     // Add click event to open detail modal
-    card.addEventListener('click', () => openFoodDetail(item));
+    card.addEventListener('click', () => openFoodDetail(item.id));
     
     return card;
 }
@@ -108,49 +107,52 @@ function setupCategoryNavigation() {
     });
 }
 
-// Open food detail modal
-function openFoodDetail(item) {
-    const modal = document.getElementById('foodDetailModal');
-    
-    // Populate modal with item data
+// Function to open food detail modal
+function openFoodDetail(itemId) {
+    const item = findFoodItem(itemId);
+    if (!item) return;
+
+    // Update model viewer
+    const modelViewer = document.getElementById('foodModel');
+    modelViewer.src = item.modelPath;
+
+    // Update food information
     document.getElementById('foodDetailName').textContent = item.name;
-    document.getElementById('foodType').textContent = item.type === 'veg' ? 'VEG' : 'NON-VEG';
-    document.getElementById('foodType').className = `food-badge ${item.type}`;
+    document.getElementById('foodType').textContent = item.type;
     document.getElementById('foodPrice').textContent = item.price;
     document.getElementById('foodDescription').textContent = item.description;
     document.getElementById('foodServes').textContent = item.serves;
     document.getElementById('foodCalories').textContent = item.calories;
     document.getElementById('foodPrepTime').textContent = item.prepTime;
-    
-    // Add ingredients
-    const ingredientsContainer = document.getElementById('foodIngredients');
-    ingredientsContainer.innerHTML = '';
+
+    // Update ingredients
+    const ingredientsList = document.getElementById('foodIngredients');
+    ingredientsList.innerHTML = '';
     item.ingredients.forEach(ingredient => {
         const tag = document.createElement('span');
         tag.className = 'ingredient-tag';
         tag.textContent = ingredient;
-        ingredientsContainer.appendChild(tag);
+        ingredientsList.appendChild(tag);
     });
-    
-    // Show modal with animation
-    modal.style.display = 'block';
-    modal.style.opacity = '0';
-    setTimeout(() => {
-        modal.style.transition = 'opacity 0.3s ease';
-        modal.style.opacity = '1';
-    }, 10);
-    
-    // Initialize 3D viewer
-    init3DViewer(item);
+
+    // Show the modal
+    document.getElementById('foodDetailModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
 }
 
-// Close food detail modal
+// Function to close food detail modal
 function closeFoodDetail() {
-    const modal = document.getElementById('foodDetailModal');
-    modal.style.opacity = '0';
-    setTimeout(() => {
-        modal.style.display = 'none';
-    }, 300);
+    document.getElementById('foodDetailModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Function to find food item by ID
+function findFoodItem(id) {
+    for (const category in menuData) {
+        const item = menuData[category].find(item => item.id === id);
+        if (item) return item;
+    }
+    return null;
 }
 
 // Initialize 3D viewer
@@ -206,49 +208,49 @@ function animate3DScene() {
     }, 1000);
 }
 
-// Open AR view (placeholder functionality)
+// Function to open AR view
 function openARView() {
-    // This would integrate with actual AR libraries like AR.js or 8th Wall
-    alert('AR View would open here!\n\nThis would use WebXR or AR.js to show the food item on your table using your phone camera.');
-    
-    // Simulate AR loading
-    const arBtn = document.querySelector('.ar-view-btn');
-    const originalText = arBtn.innerHTML;
-    arBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening AR...';
-    arBtn.disabled = true;
-    
-    setTimeout(() => {
-        arBtn.innerHTML = originalText;
-        arBtn.disabled = false;
-    }, 3000);
+    const modelViewer = document.getElementById('foodModel');
+    modelViewer.activateAR();
 }
 
-// Navigation functions
+// Function to go back
 function goBack() {
-    window.location.href = './index.html';
+    window.history.back();
 }
 
+// Function to open settings
 function openSettings() {
     document.getElementById('settingsModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
 }
 
+// Function to close settings
 function closeSettings() {
     document.getElementById('settingsModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
 }
 
 // Close modals when clicking outside
 window.onclick = function(event) {
-    const settingsModal = document.getElementById('settingsModal');
     const foodModal = document.getElementById('foodDetailModal');
-    
-    if (event.target === settingsModal) {
-        settingsModal.style.display = 'none';
-    }
+    const settingsModal = document.getElementById('settingsModal');
     
     if (event.target === foodModal) {
         closeFoodDetail();
     }
+    if (event.target === settingsModal) {
+        closeSettings();
+    }
 }
+
+// Close modals with escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeFoodDetail();
+        closeSettings();
+    }
+});
 
 // Touch gestures for mobile
 let touchStartY = 0;
