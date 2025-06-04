@@ -269,7 +269,39 @@
 
     // Back button function
     function goBack() {
-      window.history.back();
+        // Stop the AR session
+        const scene = document.querySelector('a-scene');
+        if (scene) {
+            // Stop the AR.js system
+            if (scene.systems && scene.systems['arjs']) {
+                scene.systems['arjs'].stop();
+            }
+            
+            // Stop the camera stream
+            const camera = document.querySelector('a-entity[camera]');
+            if (camera && camera.components.camera) {
+                const videoEl = camera.components.camera.el.sceneEl.camera;
+                if (videoEl && videoEl.srcObject) {
+                    const tracks = videoEl.srcObject.getTracks();
+                    tracks.forEach(track => track.stop());
+                }
+            }
+            
+            // Remove the scene
+            scene.parentNode.removeChild(scene);
+        }
+        
+        // Clear any remaining video elements
+        const videos = document.querySelectorAll('video');
+        videos.forEach(video => {
+            if (video.srcObject) {
+                const tracks = video.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+            }
+        });
+        
+        // Navigate back
+        window.history.back();
     }
 
     // Toggle debug panel with 'D' key
