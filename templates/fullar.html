@@ -390,8 +390,8 @@
         
         // Load the 3D model if provided
         if (modelPath) {
-          modelEntity.setAttribute('gltf-model', '/static/' + modelPath);
-          debug('Loading 3D model: ' + modelPath);
+          debug('Setting model path: ' + modelPath);
+          modelEntity.setAttribute('gltf-model', modelPath);
           
           // Listen for model load
           modelEntity.addEventListener('model-loaded', function onModelLoaded() {
@@ -401,9 +401,11 @@
             modelEntity.removeEventListener('model-loaded', onModelLoaded);
           });
           
-          modelEntity.addEventListener('model-error', () => {
-            debug('Error loading 3D model');
+          modelEntity.addEventListener('model-error', (error) => {
+            debug('Error loading 3D model: ' + error.detail);
           });
+        } else {
+          debug('No model path provided');
         }
       });
       
@@ -428,7 +430,10 @@
         if (infoPanel) infoPanel.style.display = 'none';
         
         const modelEntity = document.getElementById('modelEntity');
-        if (modelEntity) modelEntity.setAttribute('visible', true);
+        if (modelEntity) {
+          modelEntity.setAttribute('visible', true);
+          debug('Model visibility set to true');
+        }
       });
       
       marker.addEventListener('markerLost', () => {
@@ -437,7 +442,10 @@
         if (infoPanel) infoPanel.style.display = 'block';
         
         const modelEntity = document.getElementById('modelEntity');
-        if (modelEntity) modelEntity.setAttribute('visible', false);
+        if (modelEntity) {
+          modelEntity.setAttribute('visible', false);
+          debug('Model visibility set to false');
+        }
       });
     }
 

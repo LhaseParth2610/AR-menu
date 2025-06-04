@@ -236,7 +236,7 @@ function openARView() {
         if (foodItem && foodItem.modelPath) {
             console.log(`Opening AR view for item ${currentItemId} with model: ${foodItem.modelPath}`);
             // Redirect to fullar.html with the model path as a parameter
-            window.location.href = `/fullar?model=${encodeURIComponent(foodItem.modelPath)}&name=${encodeURIComponent(foodItem.name)}`;
+            window.location.href = `/fullar?model=${encodeURIComponent('/static/' + foodItem.modelPath)}&name=${encodeURIComponent(foodItem.name)}`;
         } else {
             console.error("Could not find model path for item ID:", currentItemId);
             // Optionally show an error message to the user
