@@ -259,25 +259,36 @@
                 <span class="close" onclick="closeARView()">&times;</span>
             </div>
             <div class="food-modal-body" style="height: calc(100vh - 120px); padding: 0;">
-                 <a-scene embedded arjs='autoStart: false; sourceType: webcam;' renderer="colorManagement: true; physicallyCorrectLights: true;">
-                   <a-assets>
-                      <!-- Assets will be defined dynamically or loaded directly -->
-                       <!-- Keeping some assets for now, but we will load dynamically -->
-                        <a-asset-item id="dish1" src="/static/models/dish1.glb"></a-asset-item>
-                        <a-asset-item id="dish2" src="/static/models/dish2.glb"></a-asset-item>
-                        <a-asset-item id="dish3" src="/static/models/dish3.glb"></a-asset-item>
-                        <a-asset-item id="dish4" src="/static/models/dish4.glb"></a-asset-item>
-                        <a-asset-item id="dish5" src="/static/models/dish5.glb"></a-asset-item>
-                   </a-assets>
-
-                   <!-- Ensure the pattern file path is correct -->
-                   <a-marker type="pattern" url="/static/assets/marker.patt" id="arFoodMarker">
-                     <!-- This entity will load the selected model -->
-                     <a-entity id="arFoodModelEntity" position="0 0 0.1" visible="false"></a-entity>
-                   </a-marker>
-
-                   <a-entity camera></a-entity>
-                 </a-scene>
+                <div id="arSceneContainer" style="width: 100%; height: 100%; position: relative;">
+                    <div id="arLoadingMessage" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; text-align: center; z-index: 1000;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Initializing AR Camera...</p>
+                    </div>
+                    <a-scene embedded 
+                            arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+                            renderer="colorManagement: true; physicallyCorrectLights: true;"
+                            vr-mode-ui="enabled: false"
+                            device-orientation-permission-ui="enabled: false">
+                        <a-assets>
+                            <a-asset-item id="currentModel" src="" crossorigin="anonymous"></a-asset-item>
+                        </a-assets>
+                        <a-marker type="pattern" 
+                                url="/static/assets/marker.patt" 
+                                smooth="true" 
+                                smoothCount="10" 
+                                smoothTolerance="0.01" 
+                                smoothThreshold="5"
+                                id="arFoodMarker">
+                            <a-entity id="arFoodModelEntity" 
+                                    gltf-model="#currentModel"
+                                    position="0 0 0.1" 
+                                    scale="1 1 1"
+                                    visible="true">
+                            </a-entity>
+                        </a-marker>
+                        <a-entity camera></a-entity>
+                    </a-scene>
+                </div>
             </div>
         </div>
     </div>
@@ -303,6 +314,125 @@
         modelViewer.addEventListener('src-change', () => {
             console.log('Model source changing...'); // Add this line
             loadingDiv.classList.remove('hidden');
+        });
+
+        let arScene = null;
+        let currentModelPath = null;
+
+        // Function to open AR view
+        function openARView() {
+            const currentModel = modelViewer.getAttribute('src');
+            const currentFoodName = document.getElementById('foodDetailName').textContent;
+            
+            if (!currentModel) {
+                alert('No 3D model available for AR view');
+                return;
+            }
+
+            // Store the current model path
+            currentModelPath = currentModel;
+            
+            // Show the AR modal
+            document.getElementById('arViewModal').style.display = 'flex';
+            document.getElementById('arModelName').textContent = currentFoodName + ' - AR View';
+            
+            // Initialize AR scene
+            initializeARScene();
+        }
+
+        // Function to initialize AR scene
+        function initializeARScene() {
+            const container = document.getElementById('arSceneContainer');
+            const loadingMessage = document.getElementById('arLoadingMessage');
+            const scene = container.querySelector('a-scene');
+            const modelEntity = document.getElementById('arFoodModelEntity');
+            const assetItem = document.querySelector('#currentModel');
+            
+            // Set up scene event listeners
+            scene.addEventListener('loaded', () => {
+                console.log('AR Scene loaded');
+                if (currentModelPath) {
+                    // Set the model path
+                    assetItem.setAttribute('src', currentModelPath);
+                    
+                    // Handle model loading
+                    modelEntity.addEventListener('model-loaded', function onModelLoaded() {
+                        console.log('Model loaded successfully');
+                        loadingMessage.style.display = 'none';
+                        modelEntity.removeEventListener('model-loaded', onModelLoaded);
+                    });
+                    
+                    modelEntity.addEventListener('model-error', (error) => {
+                        console.error('Error loading model:', error);
+                        loadingMessage.innerHTML = '<p style="color: red;">Error loading model</p>';
+                    });
+                }
+            });
+
+            // Handle marker events
+            const marker = scene.querySelector('a-marker');
+            if (marker) {
+                marker.addEventListener('markerFound', () => {
+                    console.log('Marker found');
+                    loadingMessage.style.display = 'none';
+                });
+                
+                marker.addEventListener('markerLost', () => {
+                    console.log('Marker lost');
+                    loadingMessage.style.display = 'block';
+                });
+            }
+        }
+
+        // Function to close AR view with proper cleanup
+        function closeARView() {
+            const modal = document.getElementById('arViewModal');
+            const scene = modal.querySelector('a-scene');
+            
+            if (scene) {
+                // Stop AR.js system
+                if (scene.systems && scene.systems['arjs']) {
+                    scene.systems['arjs'].stop();
+                }
+                
+                // Stop camera stream
+                const camera = scene.querySelector('a-entity[camera]');
+                if (camera && camera.components.camera) {
+                    const videoEl = camera.components.camera.el.sceneEl.camera;
+                    if (videoEl && videoEl.srcObject) {
+                        const tracks = videoEl.srcObject.getTracks();
+                        tracks.forEach(track => {
+                            track.stop();
+                            console.log('Camera track stopped:', track.kind);
+                        });
+                    }
+                }
+                
+                // Clear model
+                const modelEntity = document.getElementById('arFoodModelEntity');
+                if (modelEntity) {
+                    modelEntity.removeAttribute('gltf-model');
+                }
+                
+                // Remove scene
+                scene.parentNode.removeChild(scene);
+            }
+            
+            // Hide modal
+            modal.style.display = 'none';
+            currentModelPath = null;
+        }
+
+        // Clean up when page is unloaded
+        window.addEventListener('beforeunload', () => {
+            closeARView();
+        });
+
+        // Clean up when page is hidden (mobile)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                closeARView();
+            }
         });
     </script>
 </body>
