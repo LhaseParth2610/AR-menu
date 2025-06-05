@@ -1,3 +1,14 @@
+/*
+Overview:
+- Purpose: Core functionality for menu interaction and AR transitions
+- Workflow:
+  1. Manages food item display and category navigation
+  2. Handles 3D model loading and preview
+  3. Controls modal interactions and transitions
+  4. Manages AR view state and transitions
+  5. Provides utility functions for food item lookup
+*/
+
 // Menu page functionality
 let currentCategory = 'bestsellers';
 // let scene, camera, renderer; // Three.js variables - assuming these are not needed for current menu display
@@ -209,7 +220,7 @@ function findFoodItem(idToFind) {
 
 
 
-// Function to go back (likely used on fullar.html or similar)
+
 function goBack() {
     window.history.back();
 }

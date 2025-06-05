@@ -1,3 +1,14 @@
+/*
+Overview:
+- Purpose: Data store for menu items and their properties
+- Structure:
+  1. Organized by food categories (bestsellers, pizza, etc.)
+  2. Each item contains:
+     - Basic info (name, price, type)
+     - Details (description, ingredients)
+     - 3D model path and display properties
+*/
+
 // Menu data structure
 const menuData = {
     bestsellers: [
