@@ -1,4 +1,4 @@
-*menu.html*
+*
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -533,6 +533,9 @@
 
         // Function to stop all camera tracks
         function stopAllCameraTracks() {
+            console.log('Stopping all camera tracks...');
+            
+            // Stop the stored AR stream
             if (arStream) {
                 arStream.getTracks().forEach(track => {
                     track.stop();
@@ -541,10 +544,12 @@
                 arStream = null;
             }
 
+            // Stop all video elements
             const videos = document.querySelectorAll('video');
             videos.forEach(video => {
                 if (video.srcObject) {
-                    video.srcObject.getTracks().forEach(track => {
+                    const tracks = video.srcObject.getTracks();
+                    tracks.forEach(track => {
                         track.stop();
                         console.log('Video track stopped:', track.kind);
                     });
@@ -553,6 +558,18 @@
                 video.pause();
                 video.load();
             });
+
+            // Additional cleanup for any remaining media streams
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        stream.getTracks().forEach(track => {
+                            track.stop();
+                            console.log('MediaDevices track stopped:', track.kind);
+                        });
+                    })
+                    .catch(err => console.log('Error stopping media devices:', err));
+            }
         }
 
         // Function to close AR view
@@ -562,6 +579,7 @@
             const scene = modal.querySelector('a-scene');
             
             if (scene) {
+                // Stop AR.js system
                 if (scene.systems && scene.systems['arjs']) {
                     try {
                         scene.systems['arjs'].stop();
@@ -571,8 +589,10 @@
                     }
                 }
                 
+                // Stop camera stream
                 stopAllCameraTracks();
                 
+                // Clean up Three.js resources
                 if (scene.object3D) {
                     scene.object3D.traverse((child) => {
                         if (child.geometry) child.geometry.dispose();
@@ -586,37 +606,70 @@
                     });
                 }
                 
+                // Clear model
                 const modelEntity = document.getElementById('arFoodModelEntity');
                 if (modelEntity) {
                     modelEntity.removeAttribute('gltf-model');
                 }
                 
+                // Remove scene
                 scene.parentNode.removeChild(scene);
             }
             
+            // Hide modal
             modal.style.display = 'none';
             currentModelPath = null;
             arInitialized = false;
+
+            // Force cleanup of any remaining video elements
+            setTimeout(() => {
+                const remainingVideos = document.querySelectorAll('video');
+                remainingVideos.forEach(video => {
+                    if (video.srcObject) {
+                        video.srcObject.getTracks().forEach(track => track.stop());
+                        video.srcObject = null;
+                    }
+                    video.pause();
+                    video.load();
+                });
+            }, 100);
         }
 
-        // Cleanup event listeners
+        // Enhanced cleanup event listeners
         window.addEventListener('beforeunload', () => {
+            console.log('Page unloading - cleaning up AR');
             closeARView();
         });
 
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
+                console.log('Page hidden - cleaning up AR');
                 closeARView();
             }
         });
 
+        // Close AR view when clicking outside the modal
         document.getElementById('arViewModal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('arViewModal')) {
                 closeARView();
             }
         });
 
+        // Handle browser back button
         window.addEventListener('popstate', () => {
+            console.log('Navigation detected - cleaning up AR');
+            closeARView();
+        });
+
+        // Additional cleanup for mobile devices
+        document.addEventListener('pagehide', () => {
+            console.log('Page hide - cleaning up AR');
+            closeARView();
+        });
+
+        // Handle when the page is about to be unloaded
+        window.addEventListener('unload', () => {
+            console.log('Page unload - cleaning up AR');
             closeARView();
         });
     </script>
