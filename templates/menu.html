@@ -95,6 +95,26 @@
             right: 10px;
             border-radius: 5px; /* Rounded corners */
         }
+
+        .ui-button {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            z-index: 1000;
+            font-size: 24px;
+            opacity: 0.9;
+            transition: opacity 0.3s ease;
+        }
+
+        .ui-button:hover {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -260,10 +280,23 @@
             </div>
             <div class="food-modal-body" style="height: calc(100vh - 120px); padding: 0;">
                 <div id="arSceneContainer" style="width: 100%; height: 100%; position: relative;">
-                    <div id="arLoadingMessage" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; text-align: center; z-index: 1000;">
+                    <!-- Info Panel -->
+                    <div id="arInfoPanel" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
+                         background: rgba(0, 0, 0, 0.8); color: white; padding: 15px 25px; border-radius: 12px; 
+                         text-align: center; z-index: 1000; display: none;">
+                        <h3 id="arModelTitle"></h3>
+                        <p id="arModelDescription"></p>
+                        <p id="arModelPrice"></p>
+                    </div>
+
+                    <!-- Loading Message -->
+                    <div id="arLoadingMessage" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                         color: white; text-align: center; z-index: 1000;">
                         <i class="fas fa-spinner fa-spin"></i>
                         <p>Initializing AR Camera...</p>
                     </div>
+
+                    <!-- AR Scene -->
                     <a-scene embedded 
                             arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
                             renderer="colorManagement: true; physicallyCorrectLights: true;"
@@ -320,6 +353,12 @@
         let currentModelPath = null;
         let arInitialized = false;
         let arStream = null;
+        let isDragging = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        let rotationX = 0;
+        let rotationY = 0;
+        let flipState = false;
 
         // Function to open AR view
         function openARView() {
@@ -358,22 +397,8 @@
             // Set up scene event listeners
             scene.addEventListener('loaded', () => {
                 console.log('AR Scene loaded');
-                if (currentModelPath) {
-                    // Set the model path
-                    assetItem.setAttribute('src', currentModelPath);
-                    
-                    // Handle model loading
-                    modelEntity.addEventListener('model-loaded', function onModelLoaded() {
-                        console.log('Model loaded successfully');
-                        loadingMessage.style.display = 'none';
-                        modelEntity.removeEventListener('model-loaded', onModelLoaded);
-                    });
-                    
-                    modelEntity.addEventListener('model-error', (error) => {
-                        console.error('Error loading model:', error);
-                        loadingMessage.innerHTML = '<p style="color: red;">Error loading model</p>';
-                    });
-                }
+                loadCurrentModel();
+                addModelInteraction();
             });
 
             // Handle marker events
@@ -382,11 +407,13 @@
                 marker.addEventListener('markerFound', () => {
                     console.log('Marker found');
                     loadingMessage.style.display = 'none';
+                    document.getElementById('arInfoPanel').style.display = 'block';
                 });
                 
                 marker.addEventListener('markerLost', () => {
                     console.log('Marker lost');
                     loadingMessage.style.display = 'block';
+                    document.getElementById('arInfoPanel').style.display = 'none';
                 });
             }
 
@@ -406,11 +433,106 @@
             arInitialized = true;
         }
 
+        // Function to load current model
+        function loadCurrentModel() {
+            const currentItem = findFoodItem(currentItemId);
+            const assetItem = document.querySelector('#currentModel');
+            const modelEntity = document.getElementById('arFoodModelEntity');
+            
+            if (currentItem && currentItem.modelPath) {
+                const modelPath = '/static/' + currentItem.modelPath;
+                assetItem.setAttribute('src', modelPath);
+                
+                // Update info panel
+                document.getElementById('arModelTitle').textContent = currentItem.name;
+                document.getElementById('arModelDescription').textContent = currentItem.description;
+                document.getElementById('arModelPrice').textContent = currentItem.price;
+                
+                // Handle model loading
+                modelEntity.addEventListener('model-loaded', function onModelLoaded() {
+                    console.log('Model loaded successfully');
+                    normalizeModelSize(modelEntity, 1);
+                    modelEntity.removeEventListener('model-loaded', onModelLoaded);
+                });
+            }
+        }
+
+        // Function to reset model transform
+        function resetModelTransform() {
+            const modelEntity = document.getElementById('arFoodModelEntity');
+            if (modelEntity) {
+                modelEntity.setAttribute('rotation', { x: 0, y: 0, z: 0 });
+                rotationX = 0;
+                rotationY = 0;
+                flipState = false;
+            }
+        }
+
+        // Function to add model interaction
+        function addModelInteraction() {
+            const scene = document.querySelector('a-scene');
+            const modelEntity = document.getElementById('arFoodModelEntity');
+
+            scene.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            });
+
+            scene.addEventListener('mousemove', (e) => {
+                if (!isDragging || !modelEntity) return;
+
+                const dx = e.clientX - lastMouseX;
+                const dy = e.clientY - lastMouseY;
+
+                rotationY += dx * 0.5;
+                rotationX -= dy * 0.5;
+
+                modelEntity.setAttribute('rotation', {
+                    x: rotationX,
+                    y: rotationY,
+                    z: 0
+                });
+
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            });
+
+            scene.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            // Double click to flip
+            scene.addEventListener('dblclick', () => {
+                if (!modelEntity) return;
+                flipState = !flipState;
+                modelEntity.setAttribute('rotation', {
+                    x: rotationX,
+                    y: rotationY + (flipState ? 180 : -180),
+                    z: 0
+                });
+            });
+        }
+
+        // Function to normalize model size
+        function normalizeModelSize(model, targetSize = 1) {
+            const mesh = model.getObject3D('mesh');
+            if (!mesh) return;
+
+            const box = new THREE.Box3().setFromObject(mesh);
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scaleFactor = targetSize / maxDim;
+
+            model.setAttribute('scale', {
+                x: scaleFactor,
+                y: scaleFactor,
+                z: scaleFactor
+            });
+        }
+
         // Function to stop all camera tracks
         function stopAllCameraTracks() {
-            console.log('Stopping all camera tracks...');
-            
-            // Stop the stored AR stream
             if (arStream) {
                 arStream.getTracks().forEach(track => {
                     track.stop();
@@ -419,12 +541,10 @@
                 arStream = null;
             }
 
-            // Stop all video elements
             const videos = document.querySelectorAll('video');
             videos.forEach(video => {
                 if (video.srcObject) {
-                    const tracks = video.srcObject.getTracks();
-                    tracks.forEach(track => {
+                    video.srcObject.getTracks().forEach(track => {
                         track.stop();
                         console.log('Video track stopped:', track.kind);
                     });
@@ -433,28 +553,15 @@
                 video.pause();
                 video.load();
             });
-
-            // Stop any remaining media streams
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ video: true })
-                    .then(stream => {
-                        stream.getTracks().forEach(track => {
-                            track.stop();
-                            console.log('MediaDevices track stopped:', track.kind);
-                        });
-                    })
-                    .catch(err => console.log('Error stopping media devices:', err));
-            }
         }
 
-        // Function to close AR view with proper cleanup
+        // Function to close AR view
         function closeARView() {
             console.log('Closing AR view...');
             const modal = document.getElementById('arViewModal');
             const scene = modal.querySelector('a-scene');
             
             if (scene) {
-                // Stop AR.js system
                 if (scene.systems && scene.systems['arjs']) {
                     try {
                         scene.systems['arjs'].stop();
@@ -464,10 +571,8 @@
                     }
                 }
                 
-                // Stop camera stream
                 stopAllCameraTracks();
                 
-                // Clean up Three.js resources
                 if (scene.object3D) {
                     scene.object3D.traverse((child) => {
                         if (child.geometry) child.geometry.dispose();
@@ -481,46 +586,37 @@
                     });
                 }
                 
-                // Clear model
                 const modelEntity = document.getElementById('arFoodModelEntity');
                 if (modelEntity) {
                     modelEntity.removeAttribute('gltf-model');
                 }
                 
-                // Remove scene
                 scene.parentNode.removeChild(scene);
             }
             
-            // Hide modal
             modal.style.display = 'none';
             currentModelPath = null;
             arInitialized = false;
         }
 
-        // Clean up when page is unloaded
+        // Cleanup event listeners
         window.addEventListener('beforeunload', () => {
-            console.log('Page unloading - cleaning up AR');
             closeARView();
         });
 
-        // Clean up when page is hidden (mobile)
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
-                console.log('Page hidden - cleaning up AR');
                 closeARView();
             }
         });
 
-        // Clean up when modal is closed
         document.getElementById('arViewModal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('arViewModal')) {
                 closeARView();
             }
         });
 
-        // Handle browser back button
         window.addEventListener('popstate', () => {
-            console.log('Navigation detected - cleaning up AR');
             closeARView();
         });
     </script>
