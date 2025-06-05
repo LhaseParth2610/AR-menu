@@ -42,19 +42,7 @@ const menuData = {
         }
     ],
     pizza: [
-        {
-            id: 4,
-            name: "Desert",
-            description: "Grilled corn patty, avocado, spinach & aioli",
-            price: "₹249",
-            type: "veg",
-            serves: "1-2 people",
-            calories: "320 cal",
-            prepTime: "12 mins",
-            ingredients: ["Corn Patty", "Avocado", "Spinach", "Aioli"],
-            icon: "🍕",
-            modelPath: "models/dish4.glb"
-        },
+
         {
             id: 5,
             name: "Italian style Pizza",
@@ -79,7 +67,7 @@ const menuData = {
             prepTime: "20 mins",
             ingredients: ["Mozzarella", "Fresh Basil", "Tomato Sauce", "Olive Oil"],
             icon: "🍕",
-            modelPath: "models/dish4.glb"
+            modelPath: "models/dish5.glb"
         },
         {
             id: 7,
@@ -92,7 +80,7 @@ const menuData = {
             prepTime: "20 mins",
             ingredients: ["Pepperoni", "Mozzarella", "Pizza Sauce", "Italian Herbs"],
             icon: "🍕",
-            modelPath: "models/dish4.glb"
+            modelPath: "models/dish5.glb"
         },
         {
             id: 8,
@@ -120,7 +108,7 @@ const menuData = {
             prepTime: "15 mins",
             ingredients: ["Beef Patty", "Cheese", "Lettuce", "Tomato", "Special Sauce"],
             icon: "🍔",
-            modelPath: "models/dish4.glb"
+            modelPath: "models/dish3.glb"
         },
         {
             id: 10,
@@ -133,7 +121,7 @@ const menuData = {
             prepTime: "18 mins",
             ingredients: ["Chicken Breast", "Avocado", "Bacon", "Chipotle Mayo"],
             icon: "🍔",
-            modelPath: "models/dish4.glb"
+            modelPath: "models/dish2.glb"
         },
         {
             id: 11,
