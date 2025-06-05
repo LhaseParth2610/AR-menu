@@ -238,16 +238,51 @@
     }
 
 
-    window.addEventListener('DOMContentLoaded', () => {
-      if (currentItemId) {
-        const item = findFoodItem(currentItemId);
-        if (item && item.modelPath) {
-          debug('Setting model path: ' + item.modelPath);
-          const assetItem = document.getElementById('assetItem');
-          assetItem.setAttribute('src', '/static/' + item.modelPath);
-        }
-      }
+    // Get URL parameters
+function getUrlParameter(name) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name);
+}
 
+window.addEventListener('DOMContentLoaded', () => {
+  // Get the item ID from URL parameter
+  const itemId = getUrlParameter('itemId');
+  debug('Item ID from URL: ' + itemId);
+  
+  if (itemId) {
+    const item = findFoodItem(parseInt(itemId, 10));
+    if (item && item.modelPath) {
+      debug('Setting model path: ' + item.modelPath);
+      const assetItem = document.getElementById('assetItem');
+      assetItem.setAttribute('src', '/static/' + item.modelPath);
+      
+      // Update info panel with item details
+      const infoPanel = document.getElementById('infoPanel');
+      infoPanel.innerHTML = `<strong>${item.name}</strong><br>${item.description}<br><em>Price: ${item.price}</em>`;
+    } else {
+      debug('Item not found or no model path for ID: ' + itemId);
+    }
+  } else {
+    debug('No item ID provided in URL');
+  }
+
+  const marker = document.getElementById('carouselMarker');
+  const infoPanel = document.getElementById('infoPanel');
+
+  if (marker) {
+    marker.addEventListener('markerFound', () => {
+      debug('Marker FOUND');
+      infoPanel.style.display = 'block';
+    });
+
+    marker.addEventListener('markerLost', () => {
+      debug('Marker LOST');
+      infoPanel.style.display = 'none';
+    });
+  }
+
+  addModelInteraction();
+});
       // bindHtmlButtons();
 
       modelIds.forEach(id => {

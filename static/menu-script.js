@@ -110,6 +110,7 @@ function setupCategoryNavigation() {
 }
 
 // Function to open food detail modal
+// Update the openFoodDetail function to modify the AR button
 function openFoodDetail(itemId) {
     console.log('openFoodDetail called with itemId:', itemId);
     try {
@@ -164,6 +165,14 @@ function openFoodDetail(itemId) {
             console.error('Error updating ingredients:', error);
         }
 
+        // Update AR button to pass the current item ID
+        const arButton = document.querySelector('.ar-view-btn');
+        if (arButton) {
+            arButton.onclick = function() {
+                window.location.href = `/fullar?itemId=${itemId}`;
+            };
+        }
+
         // Show the modal
         try {
             document.getElementById('foodDetailModal').style.display = 'block';
@@ -176,7 +185,6 @@ function openFoodDetail(itemId) {
         console.error('Error in openFoodDetail:', error);
     }
 }
-
 // Function to close food detail modal
 function closeFoodDetail() {
     document.getElementById('foodDetailModal').style.display = 'none';
