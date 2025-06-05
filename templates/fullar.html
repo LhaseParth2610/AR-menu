@@ -3,11 +3,9 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>AR Carousel with Normalized Models</title>
+  <title>AR Food Viewer</title>
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
-  <script src="{{ url_for('static', filename='menu-data.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='menu-script.js') }}" defer></script>
   <style>
     body,
     html {
@@ -32,29 +30,6 @@
       z-index: 999;
     }
 
-    .ui-button {
-      position: fixed;
-      top: 50%;
-      transform: translateY(-50%);
-      padding: 15px 20px;
-      font-size: 24px;
-      color: white;
-      background-color: #ff9800;
-      border: none;
-      cursor: pointer;
-      z-index: 1000;
-      opacity: 0.9;
-      user-select: none;
-    }
-
-    /* #prevBtn {
-      left: 10px;
-    }
-
-    #nextBtn {
-      right: 10px;
-    } */
-
     #infoPanel {
       position: fixed;
       bottom: 10px;
@@ -72,45 +47,113 @@
       pointer-events: none;
       display: none;
     }
+
+    #backButton {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      padding: 10px 15px;
+      background: rgba(255, 152, 0, 0.9);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 1000;
+      font-size: 16px;
+    }
+
+    #loadingIndicator {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 1001;
+      display: none;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #ff9800;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 
 <body>
-  <!-- <button id="prevBtn" class="ui-button">⬅</button>
-  <button id="nextBtn" class="ui-button">➡</button> -->
+  <button id="backButton" onclick="goBack()">← Back to Menu</button>
+  
+  <div id="loadingIndicator">
+    <div class="spinner"></div>
+    <p>Loading AR Model...</p>
+  </div>
 
   <div id="infoPanel"></div>
   <div id="debugPanel">Debug log:</div>
 
-  <a-scene embedded arjs renderer="colorManagement: true; physicallyCorrectLights: true;">
+  <a-scene embedded arjs renderer="colorManagement: true; physicallyCorrectLights: true;" vr-mode-ui="enabled: false">
     <a-assets>
-      <a-asset-item id="assetItem" src="/static/models/dish1.glb"></a-asset-item>
- 
+      <a-asset-item id="currentModel" src="/static/models/dish1.glb"></a-asset-item>
     </a-assets>
 
-    <a-marker type="pattern" url="/static/assets/marker.patt" id="carouselMarker">
-      <a-entity id="modelentity" gltf-model="assetItem" position="0 0 0.1" visible="true"></a-entity>
-
+    <a-marker type="pattern" url="/static/assets/marker.patt" id="arMarker">
+      <a-entity id="foodModel" 
+                gltf-model="#currentModel" 
+                position="0 0 0.1" 
+                visible="true"
+                animation-mixer>
+      </a-entity>
     </a-marker>
 
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    // const modelIds = ['dish1Entity', 'dish2Entity', 'dish3Entity', 'dish4Entity', 'dish5Entity'];
-    // const descriptions = [
-    //   { title: "Dish 1", price: "$10.99", details: "Description for dish 1." },
-    //   { title: "Dish 2", price: "$11.99", details: "Description for dish 2." },
-    //   { title: "Dish 3", price: "$12.99", details: "Description for dish 3." },
-    //   { title: "Dish 4", price: "$13.99", details: "Description for dish 4." },
-    //   { title: "Dish 5", price: "$14.99", details: "Description for dish 5." }
-    // ];
+    // Menu data for reference
+    const menuData = {
+      bestsellers: [
+        { id: 1, name: "Classic Cheeseburger", price: "₹299", modelPath: "models/dish1.glb" },
+        { id: 2, name: "Veggie Delight Burger", price: "₹249", modelPath: "models/dish2.glb" },
+        { id: 3, name: "Veggie Corn Burger", price: "₹449", modelPath: "models/dish3.glb" }
+      ],
+      pizza: [
+        { id: 4, name: "Desert", price: "₹249", modelPath: "models/dish4.glb" },
+        { id: 5, name: "Italian style Pizza", price: "₹649", modelPath: "models/dish5.glb" }
+      ]
+    };
 
-    let currentIndex = 0;
+    // Find food item by ID
+    function findFoodItem(idToFind) {
+      const numericalId = parseInt(idToFind, 10);
+      if (isNaN(numericalId)) return null;
+
+      for (const category in menuData) {
+        const item = menuData[category].find(item => item.id === numericalId);
+        if (item) return item;
+      }
+      return null;
+    }
+
+    // Global variables
     let isDragging = false;
     let lastMouseX = 0;
     let lastMouseY = 0;
-    let flipState = false;
+    let currentItem = null;
+    let rotationX = 0;
+    let rotationY = 0;
 
     const debug = (msg) => {
       const panel = document.getElementById('debugPanel');
@@ -120,51 +163,28 @@
       console.log(msg);
     };
 
-    function showModel(index) {
-      modelIds.forEach((id, i) => {
-        const el = document.getElementById(id);
-        if (el) el.setAttribute('visible', i === index);
-      });
-      updateInfoPanel(index);
-      debug(`Model changed to index ${index} (${modelIds[index]})`);
+    function showLoadingIndicator(show) {
+      const indicator = document.getElementById('loadingIndicator');
+      indicator.style.display = show ? 'block' : 'none';
     }
 
-    function updateInfoPanel(index) {
-      const info = descriptions[index];
+    function updateInfoPanel(item) {
+      if (!item) return;
+      
       const panel = document.getElementById('infoPanel');
-      panel.innerHTML = `<strong>${info.title}</strong><br>${info.details}<br><em>Price: ${info.price}</em>`;
+      panel.innerHTML = `
+        <strong>${item.name}</strong><br>
+        <em>Price: ${item.price}</em><br>
+        <small>Drag to rotate • Double-tap to flip</small>
+      `;
     }
 
-    function resetModelTransform() {
-      const model = document.getElementById(modelIds[currentIndex]);
-      if (model) {
-        model.setAttribute('rotation', { x: 0, y: 0, z: 0 });
-        flipState = false;
-      }
-    }
-
-    // function bindHtmlButtons() {
-    //   const next = document.getElementById('nextBtn');
-    //   const prev = document.getElementById('prevBtn');
-
-    //   next.addEventListener('click', () => {
-    //     currentIndex = (currentIndex + 1) % modelIds.length;
-    //     resetModelTransform();
-    //     showModel(currentIndex);
-    //     debug('Next button clicked');
-    //   });
-
-    //   prev.addEventListener('click', () => {
-    //     currentIndex = (currentIndex - 1 + modelIds.length) % modelIds.length;
-    //     resetModelTransform();
-    //     showModel(currentIndex);
-    //     debug('Previous button clicked');
-    //   });
-    // }
-
-    function normalizeModelSize(model, targetSize = 1.5) {
+    function normalizeModelSize(model, targetSize = 1) {
       const mesh = model.getObject3D('mesh');
-      if (!mesh) return;
+      if (!mesh) {
+        debug('No mesh found for normalization');
+        return;
+      }
 
       const box = new THREE.Box3().setFromObject(mesh);
       const size = box.getSize(new THREE.Vector3());
@@ -177,43 +197,54 @@
         z: scaleFactor
       });
 
-      debug(`Normalized model: ${model.id} with scale factor: ${scaleFactor.toFixed(3)}`);
+      debug(`Model normalized with scale factor: ${scaleFactor.toFixed(3)}`);
+    }
+
+    function loadModel(modelPath) {
+      showLoadingIndicator(true);
+      debug(`Loading model: ${modelPath}`);
+      
+      const assetItem = document.getElementById('currentModel');
+      const modelEntity = document.getElementById('foodModel');
+      
+      // Update the asset source
+      assetItem.setAttribute('src', `/static/${modelPath}`);
+      
+      // Reset model transform
+      modelEntity.setAttribute('rotation', { x: 0, y: 0, z: 0 });
+      rotationX = 0;
+      rotationY = 0;
+      
+      // The model will be loaded automatically due to the asset reference
     }
 
     function addModelInteraction() {
       const scene = document.querySelector('a-scene');
-      let model = document.getElementById(modelIds[currentIndex]);
-      let rotationX = 0;
-      let rotationY = 0;
-
-      function updateModelRef() {
-        model = document.getElementById(modelIds[currentIndex]);
-        const rot = model.getAttribute('rotation') || { x: 0, y: 0, z: 0 };
-        rotationX = rot.x;
-        rotationY = rot.y;
-      }
-
+      
       scene.addEventListener('pointerdown', (e) => {
         isDragging = true;
         lastMouseX = e.clientX;
         lastMouseY = e.clientY;
-        updateModelRef();
+        debug('Pointer down - starting drag');
       });
 
       scene.addEventListener('pointermove', (e) => {
-        if (!isDragging || !model) return;
+        if (!isDragging) return;
 
         const dx = e.clientX - lastMouseX;
         const dy = e.clientY - lastMouseY;
 
-        rotationY += dx * 0.5; // horizontal drag → rotate Y
-        rotationX -= dy * 0.5; // vertical drag → rotate X
+        rotationY += dx * 0.5;
+        rotationX -= dy * 0.5;
 
-        model.setAttribute('rotation', {
-          x: rotationX,
-          y: rotationY,
-          z: 0
-        });
+        const model = document.getElementById('foodModel');
+        if (model) {
+          model.setAttribute('rotation', {
+            x: rotationX,
+            y: rotationY,
+            z: 0
+          });
+        }
 
         lastMouseX = e.clientX;
         lastMouseY = e.clientY;
@@ -221,65 +252,87 @@
 
       scene.addEventListener('pointerup', () => {
         isDragging = false;
+        debug('Pointer up - ending drag');
       });
 
       scene.addEventListener('dblclick', () => {
-        model = document.getElementById(modelIds[currentIndex]);
-        if (!model) return;
-        const currentRot = model.getAttribute('rotation') || { x: 0, y: 0, z: 0 };
-        flipState = !flipState;
-        model.setAttribute('rotation', {
-          x: currentRot.x,
-          y: currentRot.y + 180,
-          z: currentRot.z
-        });
-        debug(`Model flipped ${flipState ? 'ON' : 'OFF'}`);
+        const model = document.getElementById('foodModel');
+        if (model) {
+          rotationY += 180;
+          model.setAttribute('rotation', {
+            x: rotationX,
+            y: rotationY,
+            z: 0
+          });
+          debug('Model flipped 180 degrees');
+        }
       });
     }
 
+    function goBack() {
+      window.history.back();
+    }
+
+    // Initialize when DOM is loaded
     window.addEventListener('DOMContentLoaded', () => {
-  // Get the item ID from localStorage
-  const itemId = localStorage.getItem('currentArItemId');
-  debug('Item ID from localStorage: ' + itemId);
-  
-  if (itemId) {
-    const item = findFoodItem(parseInt(itemId, 10));
-    if (item && item.modelPath) {
-      debug('Setting model path: ' + item.modelPath);
-      const assetItem = document.getElementById('assetItem');
-      assetItem.setAttribute('src', '/static/' + item.modelPath);
+      debug('DOM Content Loaded');
       
-      // Clear the stored ID after use
-      localStorage.removeItem('currentArItemId');
-    }
-  }
-
-      // bindHtmlButtons();
-
-      modelIds.forEach(id => {
-        const entity = document.getElementById(id);
-        entity.addEventListener('model-loaded', () => {
-          normalizeModelSize(entity, 1);
-        });
-      });
-
-      const marker = document.getElementById('carouselMarker');
-      const infoPanel = document.getElementById('infoPanel');
-
-      if (marker) {
-        marker.addEventListener('markerFound', () => {
-          debug('Marker FOUND');
-          infoPanel.style.display = 'block';
-          showModel(currentIndex);
-        });
-
-        marker.addEventListener('markerLost', () => {
-          debug('Marker LOST');
-          infoPanel.style.display = 'none';
-        });
+      // Get the item ID from localStorage
+      const itemId = localStorage.getItem('currentArItemId');
+      debug('Item ID from localStorage: ' + itemId);
+      
+      if (itemId) {
+        currentItem = findFoodItem(parseInt(itemId, 10));
+        if (currentItem && currentItem.modelPath) {
+          debug('Found item: ' + currentItem.name);
+          loadModel(currentItem.modelPath);
+          // Clear the stored ID after use
+          localStorage.removeItem('currentArItemId');
+        } else {
+          debug('Item not found or no model path');
+          showLoadingIndicator(false);
+        }
+      } else {
+        debug('No item ID found, using default model');
+        currentItem = { name: "Default Item", price: "₹299" };
+        showLoadingIndicator(false);
       }
 
+      // Set up model loading events
+      const modelEntity = document.getElementById('foodModel');
+      
+      modelEntity.addEventListener('model-loaded', () => {
+        debug('Model loaded successfully');
+        normalizeModelSize(modelEntity, 1);
+        showLoadingIndicator(false);
+      });
+
+      modelEntity.addEventListener('model-error', (e) => {
+        debug('Model loading error: ' + e.detail);
+        showLoadingIndicator(false);
+      });
+
+      // Set up marker events
+      const marker = document.getElementById('arMarker');
+      const infoPanel = document.getElementById('infoPanel');
+
+      marker.addEventListener('markerFound', () => {
+        debug('Marker FOUND');
+        infoPanel.style.display = 'block';
+        if (currentItem) {
+          updateInfoPanel(currentItem);
+        }
+      });
+
+      marker.addEventListener('markerLost', () => {
+        debug('Marker LOST');
+        infoPanel.style.display = 'none';
+      });
+
+      // Add model interaction
       addModelInteraction();
+      
+      debug('AR Scene initialized');
     });
   </script>
 </body>
