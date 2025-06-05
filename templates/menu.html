@@ -1,3 +1,4 @@
+*menu.html*
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -235,7 +236,7 @@
                             <label><input type="checkbox"> Vegetarian</label>
                             <label><input type="checkbox"> Vegan</label>
                             <label><input type="checkbox"> Gluten-Free</label>
-                        </select>
+                        </div>
                     </div>
                     <div class="setting-item">
                         <label>AR Quality</label>
@@ -250,21 +251,33 @@
         </div>
     </div>
 
-    <!-- AR View Modal (Modified - NO Camera initialization here) -->
-    <div id="arViewModal" class="food-modal" style="display: none;">
+    <!-- AR View Modal (New) -->
+    <div id="arViewModal" class="food-modal">
         <div class="food-modal-content">
             <div class="food-modal-header">
                 <h2 id="arModelName">AR View</h2>
                 <span class="close" onclick="closeARView()">&times;</span>
             </div>
             <div class="food-modal-body" style="height: calc(100vh - 120px); padding: 0;">
-                <!-- AR Scene will be created dynamically when needed -->
-                <div id="arSceneContainer" style="width: 100%; height: 100%; background: #000;">
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; text-align: center;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                        <p>Initializing AR Camera...</p>
-                    </div>
-                </div>
+                 <a-scene embedded arjs='autoStart: false; sourceType: webcam;' renderer="colorManagement: true; physicallyCorrectLights: true;">
+                   <a-assets>
+                      <!-- Assets will be defined dynamically or loaded directly -->
+                       <!-- Keeping some assets for now, but we will load dynamically -->
+                        <a-asset-item id="dish1" src="/static/models/dish1.glb"></a-asset-item>
+                        <a-asset-item id="dish2" src="/static/models/dish2.glb"></a-asset-item>
+                        <a-asset-item id="dish3" src="/static/models/dish3.glb"></a-asset-item>
+                        <a-asset-item id="dish4" src="/static/models/dish4.glb"></a-asset-item>
+                        <a-asset-item id="dish5" src="/static/models/dish5.glb"></a-asset-item>
+                   </a-assets>
+
+                   <!-- Ensure the pattern file path is correct -->
+                   <a-marker type="pattern" url="/static/assets/marker.patt" id="arFoodMarker">
+                     <!-- This entity will load the selected model -->
+                     <a-entity id="arFoodModelEntity" position="0 0 0.1" visible="false"></a-entity>
+                   </a-marker>
+
+                   <a-entity camera></a-entity>
+                 </a-scene>
             </div>
         </div>
     </div>
@@ -272,171 +285,24 @@
     <script>
         const modelViewer = document.getElementById('foodModel');
         const loadingDiv = modelViewer.querySelector('.loading-3d');
-        let arScene = null;
-        let cameraStream = null;
 
         modelViewer.addEventListener('load', () => {
-            console.log('3D model loaded!');
+            console.log('3D model loaded!'); // Add this line
+            // Hide the loading div after the model is loaded
             loadingDiv.classList.add('hidden');
         });
 
+        // Also handle hiding if an error occurs during load
         modelViewer.addEventListener('error', () => {
-             console.error('Error loading 3D model.');
+             console.error('Error loading 3D model.'); // Add this line
              loadingDiv.classList.add('hidden');
+             // Optionally display an error message to the user
         });
 
+         // Ensure loading indicator is shown when a new model is set
         modelViewer.addEventListener('src-change', () => {
-            console.log('Model source changing...');
+            console.log('Model source changing...'); // Add this line
             loadingDiv.classList.remove('hidden');
-        });
-
-        // Modified openARView function to properly initialize camera only when needed
-        function openARView() {
-            const currentModel = modelViewer.getAttribute('src');
-            const currentFoodName = document.getElementById('foodDetailName').textContent;
-            
-            if (!currentModel) {
-                alert('No 3D model available for AR view');
-                return;
-            }
-
-            // Show the AR modal
-            document.getElementById('arViewModal').style.display = 'flex';
-            document.getElementById('arModelName').textContent = currentFoodName + ' - AR View';
-            
-            // Initialize AR scene with camera
-            initializeARScene(currentModel, currentFoodName);
-        }
-
-        // Function to initialize AR scene with camera
-        function initializeARScene(modelPath, modelName) {
-            const container = document.getElementById('arSceneContainer');
-            
-            // Clear any existing content
-            container.innerHTML = '';
-            
-            // Create AR scene
-            const arSceneHTML = `
-                <a-scene embedded 
-                         arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
-                    <a-assets>
-                        <!-- Dynamic asset loading -->
-                        <a-asset-item id="currentModel" src=""></a-asset-item>
-                    </a-assets>
-                    
-                    <a-marker type="pattern" url="/static/assets/marker.patt" smooth="true" smoothCount="10">
-                        <a-entity id="modelEntity" 
-                                  gltf-model="#currentModel"
-                                  position="0 0 0.1" 
-                                  scale="1 1 1">
-                        </a-entity>
-                    </a-marker>
-                    
-                    <a-entity camera></a-entity>
-                </a-scene>
-            `;
-            
-            container.innerHTML = arSceneHTML;
-            arScene = container.querySelector('a-scene');
-            
-            // Wait for scene to load
-            arScene.addEventListener('loaded', () => {
-                console.log('AR Scene loaded');
-                // Camera will start automatically with arjs
-                const modelEntity = document.getElementById('modelEntity');
-                const assetItem = document.querySelector('#currentModel');
-                
-                if (modelPath) {
-                    // Set the asset source first
-                    assetItem.setAttribute('src', '/static/' + modelPath);
-                    
-                    // Wait for asset to load
-                    assetItem.addEventListener('loaded', function onAssetLoaded() {
-                        debug('Asset loaded successfully');
-                        normalizeModelSize(modelEntity, 1);
-                        document.getElementById('loadingMessage').style.display = 'none';
-                        document.getElementById('infoPanel').style.display = 'block';
-                        addModelInteraction();
-                        assetItem.removeEventListener('loaded', onAssetLoaded);
-                    });
-                    
-                    assetItem.addEventListener('error', (error) => {
-                        debug('Error loading asset: ' + error);
-                        document.getElementById('loadingMessage').textContent = 'Error loading model';
-                    });
-                }
-            });
-
-            // Handle AR events
-            const marker = arScene.querySelector('a-marker');
-            if (marker) {
-                marker.addEventListener('markerFound', () => {
-                    console.log('Marker found');
-                });
-                marker.addEventListener('markerLost', () => {
-                    console.log('Marker lost');
-                });
-            }
-        }
-
-        // Modified closeARView function with proper cleanup
-        function closeARView() {
-            const modal = document.getElementById('arViewModal');
-            const container = document.getElementById('arSceneContainer');
-            
-            // Stop camera and cleanup AR scene
-            if (arScene) {
-                // Stop AR.js system
-                if (arScene.systems && arScene.systems['arjs']) {
-                    arScene.systems['arjs'].stop();
-                }
-                
-                // Stop camera stream
-                const cameraEl = arScene.querySelector('a-entity[camera]');
-                if (cameraEl) {
-                    // Get video element created by AR.js
-                    const videos = document.querySelectorAll('video');
-                    videos.forEach(video => {
-                        if (video.srcObject) {
-                            const tracks = video.srcObject.getTracks();
-                            tracks.forEach(track => {
-                                track.stop();
-                                console.log('Camera track stopped');
-                            });
-                            video.srcObject = null;
-                        }
-                    });
-                }
-                
-                // Remove scene
-                arScene.remove();
-                arScene = null;
-            }
-            
-            // Clear container and hide modal
-            container.innerHTML = `
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; text-align: center;">
-                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                    <p>Initializing AR Camera...</p>
-                </div>
-            `;
-            
-            modal.style.display = 'none';
-            console.log('AR View closed and camera stopped');
-        }
-
-        // Clean up when page is unloaded
-        window.addEventListener('beforeunload', () => {
-            if (arScene) {
-                closeARView();
-            }
-        });
-
-        // Clean up when page is hidden (mobile)
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden && arScene) {
-                closeARView();
-            }
         });
     </script>
 </body>
