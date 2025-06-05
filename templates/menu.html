@@ -251,7 +251,7 @@
         </div>
     </div>
 
-    <!-- AR View Modal (New) -->
+    <!-- AR View Modal -->
     <div id="arViewModal" class="food-modal">
         <div class="food-modal-content">
             <div class="food-modal-header">
@@ -318,6 +318,8 @@
 
         let arScene = null;
         let currentModelPath = null;
+        let arInitialized = false;
+        let arStream = null;
 
         // Function to open AR view
         function openARView() {
@@ -327,6 +329,11 @@
             if (!currentModel) {
                 alert('No 3D model available for AR view');
                 return;
+            }
+
+            // Ensure any previous AR session is cleaned up
+            if (arInitialized) {
+                closeARView();
             }
 
             // Store the current model path
@@ -382,30 +389,96 @@
                     loadingMessage.style.display = 'block';
                 });
             }
+
+            // Store the AR stream
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        arStream = stream;
+                        console.log('AR stream initialized');
+                    })
+                    .catch(err => {
+                        console.error('Error accessing camera:', err);
+                        loadingMessage.innerHTML = '<p style="color: red;">Error accessing camera</p>';
+                    });
+            }
+
+            arInitialized = true;
+        }
+
+        // Function to stop all camera tracks
+        function stopAllCameraTracks() {
+            console.log('Stopping all camera tracks...');
+            
+            // Stop the stored AR stream
+            if (arStream) {
+                arStream.getTracks().forEach(track => {
+                    track.stop();
+                    console.log('AR stream track stopped:', track.kind);
+                });
+                arStream = null;
+            }
+
+            // Stop all video elements
+            const videos = document.querySelectorAll('video');
+            videos.forEach(video => {
+                if (video.srcObject) {
+                    const tracks = video.srcObject.getTracks();
+                    tracks.forEach(track => {
+                        track.stop();
+                        console.log('Video track stopped:', track.kind);
+                    });
+                    video.srcObject = null;
+                }
+                video.pause();
+                video.load();
+            });
+
+            // Stop any remaining media streams
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        stream.getTracks().forEach(track => {
+                            track.stop();
+                            console.log('MediaDevices track stopped:', track.kind);
+                        });
+                    })
+                    .catch(err => console.log('Error stopping media devices:', err));
+            }
         }
 
         // Function to close AR view with proper cleanup
         function closeARView() {
+            console.log('Closing AR view...');
             const modal = document.getElementById('arViewModal');
             const scene = modal.querySelector('a-scene');
             
             if (scene) {
                 // Stop AR.js system
                 if (scene.systems && scene.systems['arjs']) {
-                    scene.systems['arjs'].stop();
+                    try {
+                        scene.systems['arjs'].stop();
+                        console.log('AR.js system stopped');
+                    } catch (e) {
+                        console.error('Error stopping AR.js:', e);
+                    }
                 }
                 
                 // Stop camera stream
-                const camera = scene.querySelector('a-entity[camera]');
-                if (camera && camera.components.camera) {
-                    const videoEl = camera.components.camera.el.sceneEl.camera;
-                    if (videoEl && videoEl.srcObject) {
-                        const tracks = videoEl.srcObject.getTracks();
-                        tracks.forEach(track => {
-                            track.stop();
-                            console.log('Camera track stopped:', track.kind);
-                        });
-                    }
+                stopAllCameraTracks();
+                
+                // Clean up Three.js resources
+                if (scene.object3D) {
+                    scene.object3D.traverse((child) => {
+                        if (child.geometry) child.geometry.dispose();
+                        if (child.material) {
+                            if (Array.isArray(child.material)) {
+                                child.material.forEach(material => material.dispose());
+                            } else {
+                                child.material.dispose();
+                            }
+                        }
+                    });
                 }
                 
                 // Clear model
@@ -421,18 +494,34 @@
             // Hide modal
             modal.style.display = 'none';
             currentModelPath = null;
+            arInitialized = false;
         }
 
         // Clean up when page is unloaded
         window.addEventListener('beforeunload', () => {
+            console.log('Page unloading - cleaning up AR');
             closeARView();
         });
 
         // Clean up when page is hidden (mobile)
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
+                console.log('Page hidden - cleaning up AR');
                 closeARView();
             }
+        });
+
+        // Clean up when modal is closed
+        document.getElementById('arViewModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('arViewModal')) {
+                closeARView();
+            }
+        });
+
+        // Handle browser back button
+        window.addEventListener('popstate', () => {
+            console.log('Navigation detected - cleaning up AR');
+            closeARView();
         });
     </script>
 </body>

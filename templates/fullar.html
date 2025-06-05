@@ -1,4 +1,3 @@
-*fullar.html*
 <!DOCTYPE html>
 <html lang="en">
 
@@ -18,6 +17,19 @@
       height: 100%;
       overflow: hidden;
       font-family: 'Poppins', sans-serif;
+      /* Prevent zoom on mobile */
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    /* Prevent zoom on input focus */
+    input, select, textarea {
+      font-size: 16px !important;
     }
 
     #infoPanel {
@@ -33,6 +45,7 @@
       z-index: 1000;
       backdrop-filter: blur(10px);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      pointer-events: none; /* Prevent interference with camera */
     }
 
     #backButton {
@@ -50,6 +63,7 @@
       backdrop-filter: blur(10px);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
       transition: all 0.3s ease;
+      pointer-events: auto;
     }
 
     #backButton:hover {
@@ -105,6 +119,7 @@
       backdrop-filter: blur(10px);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
       transition: all 0.3s ease;
+      pointer-events: auto;
     }
 
     #resetButton:hover {
@@ -112,8 +127,28 @@
       box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
     }
 
-    /* Camera overlay */
+    /* Camera overlay - Full screen with proper constraints */
     .a-canvas {
+      width: 100% !important;
+      height: 100% !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      z-index: 1 !important;
+    }
+
+    /* Prevent camera zoom issues */
+    a-scene {
+      width: 100% !important;
+      height: 100% !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+    }
+
+    /* Fix for mobile camera zoom */
+    video {
+      object-fit: cover !important;
       width: 100% !important;
       height: 100% !important;
     }
@@ -135,17 +170,47 @@
     <p>Drag to rotate • Double-click to flip</p>
   </div>
 
-  <div id="loadingMessage">
-    Loading AR View...
-  </div>
+  <!-- <div id="loadingMessage">
+    <i class="fas fa-spinner fa-spin"></i><br>
+    Starting Camera...
+  </div> -->
 
   <div id="debugPanel">Debug log:</div>
 
-  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720;">
-    <a-marker type="pattern" url="/static/assets/marker.patt" smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
-      <a-entity id="modelEntity" position="0 0 0.1" scale="1 1 1"></a-entity>
+  <!-- AR Scene with proper camera settings -->
+  <a-scene embedded 
+           arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720; cameraParametersUrl: /static/assets/camera_para.dat;"
+           renderer="colorManagement: true; physicallyCorrectLights: true; antialias: true;"
+           vr-mode-ui="enabled: false"
+           device-orientation-permission-ui="enabled: false"
+           loading-screen="enabled: false">
+    
+    <a-assets>
+      <a-asset-item id="currentModel" src="" crossorigin="anonymous"></a-asset-item>
+    </a-assets>
+    
+    <a-marker type="pattern" 
+              url="/static/assets/marker.patt" 
+              smooth="true" 
+              smoothCount="10" 
+              smoothTolerance="0.01" 
+              smoothThreshold="5"
+              id="markerA">
+      <a-entity id="modelEntity" 
+                gltf-model="#currentModel"
+                position="0 0 0.1" 
+                scale="1 1 1"
+                visible="true"
+                animation-mixer>
+      </a-entity>
     </a-marker>
-    <a-entity camera></a-entity>
+    
+    <!-- Camera with proper constraints -->
+    <a-entity camera 
+              look-controls-enabled="false" 
+              arjs-look-controls="smoothingFactor: 0.1"
+              wasd-controls-enabled="false">
+    </a-entity>
   </a-scene>
 
   <script>
@@ -167,6 +232,10 @@
     if (modelName) {
       document.getElementById('modelName').textContent = modelName;
     }
+
+    // Camera initialization tracking
+    let cameraInitialized = false;
+    let arSceneReady = false;
 
     // Function to normalize model size
     function normalizeModelSize(model, targetSize = 1) {
@@ -214,19 +283,22 @@
       }
     }
 
-    // Add model interaction
+    // Add model interaction with proper touch handling
     function addModelInteraction() {
       const scene = document.querySelector('a-scene');
       const model = document.getElementById('modelEntity');
 
-      scene.addEventListener('pointerdown', (e) => {
+      // Mouse events
+      scene.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'BUTTON') return; // Ignore button clicks
         isDragging = true;
         lastMouseX = e.clientX;
         lastMouseY = e.clientY;
-        debug('Started dragging');
+        debug('Started mouse dragging');
+        e.preventDefault();
       });
 
-      scene.addEventListener('pointermove', (e) => {
+      scene.addEventListener('mousemove', (e) => {
         if (!isDragging || !model) return;
 
         const dx = e.clientX - lastMouseX;
@@ -243,82 +315,275 @@
 
         lastMouseX = e.clientX;
         lastMouseY = e.clientY;
+        e.preventDefault();
       });
 
-      scene.addEventListener('pointerup', () => {
+      scene.addEventListener('mouseup', (e) => {
         isDragging = false;
-        debug('Stopped dragging');
+        debug('Stopped mouse dragging');
       });
 
-      scene.addEventListener('dblclick', () => {
-        if (!model) return;
-        flipState = !flipState;
+      // Touch events for mobile
+      scene.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          isDragging = true;
+          lastMouseX = e.touches[0].clientX;
+          lastMouseY = e.touches[0].clientY;
+          debug('Started touch dragging');
+          e.preventDefault();
+        }
+      });
+
+      scene.addEventListener('touchmove', (e) => {
+        if (!isDragging || !model || e.touches.length !== 1) return;
+
+        const dx = e.touches[0].clientX - lastMouseX;
+        const dy = e.touches[0].clientY - lastMouseY;
+
+        rotationY += dx * 0.5;
+        rotationX -= dy * 0.5;
+
         model.setAttribute('rotation', {
           x: rotationX,
-          y: rotationY + 180,
+          y: rotationY,
           z: 0
         });
-        debug(`Model flipped ${flipState ? 'ON' : 'OFF'}`);
+
+        lastMouseX = e.touches[0].clientX;
+        lastMouseY = e.touches[0].clientY;
+        e.preventDefault();
+      });
+
+      scene.addEventListener('touchend', (e) => {
+        isDragging = false;
+        debug('Stopped touch dragging');
+      });
+
+      // Double tap for flip
+      let lastTap = 0;
+      scene.addEventListener('touchend', (e) => {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        
+        if (tapLength < 500 && tapLength > 0) {
+          if (!model) return;
+          flipState = !flipState;
+          model.setAttribute('rotation', {
+            x: rotationX,
+            y: rotationY + (flipState ? 180 : -180),
+            z: 0
+          });
+          debug(`Model flipped ${flipState ? 'ON' : 'OFF'}`);
+          e.preventDefault();
+        }
+        lastTap = currentTime;
       });
     }
 
-    // Load the model when the scene is ready
-    document.querySelector('a-scene').addEventListener('loaded', function () {
+    // Initialize camera and AR scene
+    function initializeAR() {
+      debug('Initializing AR...');
+      
+      const scene = document.querySelector('a-scene');
       const modelEntity = document.getElementById('modelEntity');
-      if (modelPath) {
-        modelEntity.setAttribute('gltf-model', '/static/' + modelPath);
+      const assetItem = document.querySelector('#currentModel');
+      const loadingMessage = document.getElementById('loadingMessage');
+      
+      // Wait for AR.js to be ready
+      scene.addEventListener('arjs-video-loaded', () => {
+        debug('AR camera loaded successfully');
+        cameraInitialized = true;
+        loadingMessage.style.display = 'none';
         
-        // Listen for model load to normalize size
-        modelEntity.addEventListener('model-loaded', function onModelLoaded() {
-          debug('Model loaded successfully');
-          normalizeModelSize(modelEntity, 1);
-          document.getElementById('loadingMessage').style.display = 'none';
-          document.getElementById('infoPanel').style.display = 'block';
-          addModelInteraction();
-          modelEntity.removeEventListener('model-loaded', onModelLoaded);
-        });
-      } else {
-        console.error('No model path provided');
-        document.getElementById('loadingMessage').textContent = 'Error: No model specified';
-      }
-    });
+        // Load the 3D model if provided
+        if (modelPath) {
+          debug('Setting model path: ' + modelPath);
+          // Remove any duplicate /static/ prefix
+          const cleanPath = modelPath.replace(/^\/static\//, '');
+          const fullPath = '/static/' + cleanPath;
+          debug('Full model path: ' + fullPath);
+          
+          // Set the asset source first
+          assetItem.setAttribute('src', fullPath);
+          
+          // Wait for asset to load
+          assetItem.addEventListener('loaded', function onAssetLoaded() {
+            debug('Asset loaded successfully');
+            // Add a small delay to ensure the model is ready
+            setTimeout(() => {
+              normalizeModelSize(modelEntity, 0.8);
+              addModelInteraction();
+              debug('Model setup complete');
+            }, 100);
+            assetItem.removeEventListener('loaded', onAssetLoaded);
+          });
+          
+          // Add more detailed error handling
+          assetItem.addEventListener('error', (error) => {
+            debug('Error loading asset: ' + error);
+            debug('Failed path: ' + fullPath);
+            document.getElementById('loadingMessage').textContent = 'Error loading model';
+          });
+
+          // Also listen for model-loaded event on the entity
+          modelEntity.addEventListener('model-loaded', () => {
+            debug('Model entity loaded successfully');
+          });
+
+          modelEntity.addEventListener('model-error', (error) => {
+            debug('Model entity error: ' + error.detail);
+          });
+        } else {
+          debug('No model path provided');
+        }
+      });
+      
+      // Handle scene ready
+      scene.addEventListener('loaded', () => {
+        debug('A-Frame scene loaded');
+        arSceneReady = true;
+      });
+      
+      // Handle AR.js initialization errors
+      scene.addEventListener('arjs-nft-init-data', (e) => {
+        debug('AR.js initialization error: ' + JSON.stringify(e.detail));
+      });
+    }
 
     // Handle marker found/lost events
     const marker = document.querySelector('a-marker');
-    marker.addEventListener('markerFound', () => {
-      document.getElementById('infoPanel').style.display = 'none';
-      debug('Marker found');
-    });
-    marker.addEventListener('markerLost', () => {
-      document.getElementById('infoPanel').style.display = 'block';
-      debug('Marker lost');
-    });
+    if (marker) {
+      marker.addEventListener('markerFound', () => {
+        debug('Marker found - showing model');
+        const infoPanel = document.getElementById('infoPanel');
+        if (infoPanel) infoPanel.style.display = 'none';
+        
+        const modelEntity = document.getElementById('modelEntity');
+        if (modelEntity) {
+          modelEntity.setAttribute('visible', true);
+          debug('Model visibility set to true');
+        }
+      });
+      
+      marker.addEventListener('markerLost', () => {
+        debug('Marker lost - hiding model');
+        const infoPanel = document.getElementById('infoPanel');
+        if (infoPanel) infoPanel.style.display = 'block';
+        
+        const modelEntity = document.getElementById('modelEntity');
+        if (modelEntity) {
+          modelEntity.setAttribute('visible', false);
+          debug('Model visibility set to false');
+        }
+      });
+    }
 
-    // Back button function with proper cleanup
+    // Improved back button function with comprehensive cleanup
     function goBack() {
-      // Stop the AR session
+      debug('Closing AR view...');
+      
       const scene = document.querySelector('a-scene');
-      if (scene) {
-        // Stop the AR.js system
-        if (scene.systems && scene.systems['arjs']) {
-          scene.systems['arjs'].stop();
-        }
-        
-        // Stop the camera stream
-        const camera = document.querySelector('a-entity[camera]');
-        if (camera && camera.components.camera) {
-          const videoEl = camera.components.camera.el.sceneEl.camera;
-          if (videoEl && videoEl.srcObject) {
-            const tracks = videoEl.srcObject.getTracks();
-            tracks.forEach(track => track.stop());
-          }
-        }
-        
-        // Remove the scene
-        scene.parentNode.removeChild(scene);
+      const loadingMessage = document.getElementById('loadingMessage');
+      
+      // Show loading message during cleanup
+      if (loadingMessage) {
+        loadingMessage.innerHTML = '<i class="fas fa-spinner fa-spin"></i><br>Closing Camera...';
+        loadingMessage.style.display = 'block';
       }
       
-      // Clear any remaining video elements
+      // Stop all camera streams
+      navigator.mediaDevices.getUserMedia = navigator.mediaDevices.getUserMedia || 
+                                          navigator.webkitGetUserMedia || 
+                                          navigator.mozGetUserMedia;
+      
+      // Find and stop all video streams
+      const videos = document.querySelectorAll('video');
+      videos.forEach(video => {
+        if (video.srcObject) {
+          const tracks = video.srcObject.getTracks();
+          tracks.forEach(track => {
+            track.stop();
+            debug('Camera track stopped: ' + track.kind);
+          });
+          video.srcObject = null;
+        }
+        video.pause();
+        video.load(); // Reset video element
+      });
+      
+      // Stop AR.js system
+      if (scene && scene.systems && scene.systems['arjs']) {
+        try {
+          scene.systems['arjs'].stop();
+          debug('AR.js system stopped');
+        } catch (e) {
+          debug('Error stopping AR.js: ' + e.message);
+        }
+      }
+      
+      // Additional cleanup for AR.js
+      if (window.ARjs && window.ARjs.Context) {
+        try {
+          if (window.ARjs.Context._context) {
+            window.ARjs.Context._context.arController.dispose();
+          }
+        } catch (e) {
+          debug('Error disposing AR context: ' + e.message);
+        }
+      }
+      
+      // Clean up Three.js resources
+      if (scene && scene.object3D) {
+        scene.object3D.traverse((child) => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach(material => material.dispose());
+            } else {
+              child.material.dispose();
+            }
+          }
+        });
+      }
+      
+      // Small delay to ensure cleanup completes
+      setTimeout(() => {
+        // Navigate back
+        if (document.referrer && document.referrer.includes('/menu')) {
+          window.location.href = document.referrer;
+        } else {
+          window.history.back();
+        }
+      }, 500);
+    }
+
+    // Handle page visibility changes (mobile background/foreground)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        debug('Page hidden - pausing AR');
+        // Pause camera when page is hidden
+        const videos = document.querySelectorAll('video');
+        videos.forEach(video => {
+          if (video.srcObject) {
+            video.pause();
+          }
+        });
+      } else {
+        debug('Page visible - resuming AR');
+        // Resume camera when page is visible
+        const videos = document.querySelectorAll('video');
+        videos.forEach(video => {
+          if (video.srcObject) {
+            video.play();
+          }
+        });
+      }
+    });
+
+    // Handle browser back button
+    window.addEventListener('beforeunload', () => {
+      debug('Page unloading - cleaning up');
+      // Quick cleanup on page unload
       const videos = document.querySelectorAll('video');
       videos.forEach(video => {
         if (video.srcObject) {
@@ -326,10 +591,13 @@
           tracks.forEach(track => track.stop());
         }
       });
-      
-      // Navigate back
-      window.history.back();
-    }
+    });
+
+    // Handle browser back/forward navigation
+    window.addEventListener('popstate', (e) => {
+      debug('Navigation detected - cleaning up');
+      goBack();
+    });
 
     // Toggle debug panel with 'D' key
     document.addEventListener('keydown', (e) => {
@@ -338,7 +606,31 @@
         debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
       }
     });
-  </script>
-</body>
 
-</html>
+    // Prevent zoom on mobile devices
+    document.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 1) {
+        e.preventDefault(); // Prevent pinch zoom
+      }
+    }, { passive: false });
+
+    document.addEventListener('gesturestart', (e) => {
+      e.preventDefault(); // Prevent gesture zoom
+    });
+
+    document.addEventListener('gesturechange', (e) => {
+      e.preventDefault(); // Prevent gesture zoom
+    });
+
+    document.addEventListener('gestureend', (e) => {
+      e.preventDefault(); // Prevent gesture zoom
+    });
+
+    // Initialize AR when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeAR);
+    } else {
+      initializeAR();
+    }
+
+    debug('AR View initialized with model: ' + (modelPath || 'none'));
