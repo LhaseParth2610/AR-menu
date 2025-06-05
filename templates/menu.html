@@ -318,23 +318,21 @@
             // Create AR scene
             const arSceneHTML = `
                 <a-scene embedded 
-                         arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'
-                         renderer="colorManagement: true; physicallyCorrectLights: true;"
-                         vr-mode-ui="enabled: false"
-                         device-orientation-permission-ui="enabled: false">
+                         arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
                     <a-assets>
-                        <a-asset-item id="currentModel" src="/static/${modelPath}"></a-asset-item>
+                        <!-- Dynamic asset loading -->
+                        <a-asset-item id="currentModel" src=""></a-asset-item>
                     </a-assets>
                     
                     <a-marker type="pattern" url="/static/assets/marker.patt" smooth="true" smoothCount="10">
-                        <a-entity gltf-model="#currentModel" 
+                        <a-entity id="modelEntity" 
+                                  gltf-model="#currentModel"
                                   position="0 0 0.1" 
-                                  scale="1 1 1"
-                                  animation-mixer>
+                                  scale="1 1 1">
                         </a-entity>
                     </a-marker>
                     
-                    <a-entity camera look-controls-enabled="false" arjs-look-controls="smoothingFactor: 0.1"></a-entity>
+                    <a-entity camera></a-entity>
                 </a-scene>
             `;
             
@@ -345,6 +343,28 @@
             arScene.addEventListener('loaded', () => {
                 console.log('AR Scene loaded');
                 // Camera will start automatically with arjs
+                const modelEntity = document.getElementById('modelEntity');
+                const assetItem = document.querySelector('#currentModel');
+                
+                if (modelPath) {
+                    // Set the asset source first
+                    assetItem.setAttribute('src', '/static/' + modelPath);
+                    
+                    // Wait for asset to load
+                    assetItem.addEventListener('loaded', function onAssetLoaded() {
+                        debug('Asset loaded successfully');
+                        normalizeModelSize(modelEntity, 1);
+                        document.getElementById('loadingMessage').style.display = 'none';
+                        document.getElementById('infoPanel').style.display = 'block';
+                        addModelInteraction();
+                        assetItem.removeEventListener('loaded', onAssetLoaded);
+                    });
+                    
+                    assetItem.addEventListener('error', (error) => {
+                        debug('Error loading asset: ' + error);
+                        document.getElementById('loadingMessage').textContent = 'Error loading model';
+                    });
+                }
             });
 
             // Handle AR events

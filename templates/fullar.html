@@ -185,6 +185,10 @@
            device-orientation-permission-ui="enabled: false"
            loading-screen="enabled: false">
     
+    <a-assets>
+      <a-asset-item id="currentModel" src=""></a-asset-item>
+    </a-assets>
+    
     <a-marker type="pattern" 
               url="/static/assets/marker.patt" 
               smooth="true" 
@@ -193,6 +197,7 @@
               smoothThreshold="5"
               id="markerA">
       <a-entity id="modelEntity" 
+                gltf-model="#currentModel"
                 position="0 0 0.1" 
                 scale="1 1 1"
                 visible="true">
@@ -380,6 +385,7 @@
       
       const scene = document.querySelector('a-scene');
       const modelEntity = document.getElementById('modelEntity');
+      const assetItem = document.querySelector('#currentModel');
       const loadingMessage = document.getElementById('loadingMessage');
       
       // Wait for AR.js to be ready
@@ -391,18 +397,20 @@
         // Load the 3D model if provided
         if (modelPath) {
           debug('Setting model path: ' + modelPath);
-          modelEntity.setAttribute('gltf-model', modelPath);
+          // Set the asset source first
+          assetItem.setAttribute('src', '/static/' + modelPath);
           
-          // Listen for model load
-          modelEntity.addEventListener('model-loaded', function onModelLoaded() {
-            debug('3D Model loaded successfully');
+          // Wait for asset to load
+          assetItem.addEventListener('loaded', function onAssetLoaded() {
+            debug('Asset loaded successfully');
             normalizeModelSize(modelEntity, 0.8); // Slightly smaller for AR
             addModelInteraction();
-            modelEntity.removeEventListener('model-loaded', onModelLoaded);
+            assetItem.removeEventListener('loaded', onAssetLoaded);
           });
           
-          modelEntity.addEventListener('model-error', (error) => {
-            debug('Error loading 3D model: ' + error.detail);
+          assetItem.addEventListener('error', (error) => {
+            debug('Error loading asset: ' + error);
+            document.getElementById('loadingMessage').textContent = 'Error loading model';
           });
         } else {
           debug('No model path provided');
