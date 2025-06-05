@@ -3,87 +3,17 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AR View - TasteAR</title>
+  <title>AR Carousel with Normalized Models</title>
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <script src="{{ url_for('static', filename='menu-data.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='menu-script.js') }}" defer></script>
   <style>
     body,
     html {
       margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
       overflow: hidden;
-      font-family: 'Poppins', sans-serif;
-      /* Prevent zoom on mobile */
-      touch-action: manipulation;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      -khtml-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-    }
-
-    /* Prevent zoom on input focus */
-    input, select, textarea {
-      font-size: 16px !important;
-    }
-
-    #infoPanel {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 15px 25px;
-      border-radius: 12px;
-      text-align: center;
-      z-index: 1000;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-      pointer-events: none; /* Prevent interference with camera */
-    }
-
-    #backButton {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 12px;
-      cursor: pointer;
-      z-index: 1000;
-      font-size: 16px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-      transition: all 0.3s ease;
-      pointer-events: auto;
-    }
-
-    #backButton:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
-    }
-
-    #loadingMessage {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 20px 30px;
-      border-radius: 12px;
-      text-align: center;
-      z-index: 1000;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      font-family: Arial, sans-serif;
     }
 
     #debugPanel {
@@ -92,133 +22,96 @@
       left: 0;
       width: 100%;
       max-height: 120px;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.7);
       color: #0f0;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: monospace;
       font-size: 12px;
       padding: 10px;
       box-sizing: border-box;
       overflow-y: auto;
       z-index: 999;
-      display: none;
-      backdrop-filter: blur(10px);
     }
 
-    #resetButton {
+    .ui-button {
       position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(0, 0, 0, 0.8);
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 15px 20px;
+      font-size: 24px;
       color: white;
+      background-color: #ff9800;
       border: none;
-      padding: 12px 20px;
-      border-radius: 12px;
       cursor: pointer;
       z-index: 1000;
-      font-size: 16px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-      transition: all 0.3s ease;
-      pointer-events: auto;
+      opacity: 0.9;
+      user-select: none;
     }
 
-    #resetButton:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+    /* #prevBtn {
+      left: 10px;
     }
 
-    /* Camera overlay - Full screen with proper constraints */
-    .a-canvas {
-      width: 100% !important;
-      height: 100% !important;
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      z-index: 1 !important;
-    }
+    #nextBtn {
+      right: 10px;
+    } */
 
-    /* Prevent camera zoom issues */
-    a-scene {
-      width: 100% !important;
-      height: 100% !important;
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-    }
-
-    /* Fix for mobile camera zoom */
-    video {
-      object-fit: cover !important;
-      width: 100% !important;
-      height: 100% !important;
+    #infoPanel {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 152, 0, 0.9);
+      padding: 15px 25px;
+      border-radius: 8px;
+      font-size: 18px;
+      color: #111;
+      max-width: 300px;
+      text-align: center;
+      z-index: 1000;
+      user-select: none;
+      pointer-events: none;
+      display: none;
     }
   </style>
 </head>
 
 <body>
-  <button id="backButton" onclick="goBack()">
-    <i class="fas fa-arrow-left"></i> Back to Menu
-  </button>
+  <!-- <button id="prevBtn" class="ui-button">⬅</button>
+  <button id="nextBtn" class="ui-button">➡</button> -->
 
-  <button id="resetButton" onclick="resetModelTransform()">
-    <i class="fas fa-sync"></i> Reset View
-  </button>
-
-  <div id="infoPanel">
-    <h3 id="modelName"></h3>
-    <p>Point your camera at the marker</p>
-    <p>Drag to rotate • Double-click to flip</p>
-  </div>
-
-  <!-- <div id="loadingMessage">
-    <i class="fas fa-spinner fa-spin"></i><br>
-    Starting Camera...
-  </div> -->
-
+  <div id="infoPanel"></div>
   <div id="debugPanel">Debug log:</div>
 
-  <!-- AR Scene with proper camera settings -->
-  <a-scene embedded 
-           arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720; cameraParametersUrl: /static/assets/camera_para.dat;"
-           renderer="colorManagement: true; physicallyCorrectLights: true; antialias: true;"
-           vr-mode-ui="enabled: false"
-           device-orientation-permission-ui="enabled: false"
-           loading-screen="enabled: false">
-    
+  <a-scene embedded arjs renderer="colorManagement: true; physicallyCorrectLights: true;">
     <a-assets>
-      <a-asset-item id="currentModel" src=""></a-asset-item>
+      <a-asset-item id="assetItem" src=""></a-asset-item>
+ 
     </a-assets>
-    
-    <a-marker type="pattern" 
-              url="/static/assets/marker.patt" 
-              smooth="true" 
-              smoothCount="10" 
-              smoothTolerance="0.01" 
-              smoothThreshold="5"
-              id="markerA">
-      <a-entity id="modelEntity" 
-                gltf-model="#currentModel"
-                position="0 0 0.1" 
-                scale="1 1 1"
-                visible="true">
-      </a-entity>
+
+    <a-marker type="pattern" url="/static/assets/marker.patt" id="carouselMarker">
+      <a-entity id="modelentity" gltf-model="#CurrentModel" position="0 0 0.1" visible="true"></a-entity>
+
     </a-marker>
-    
-    <!-- Camera with proper constraints -->
-    <a-entity camera 
-              look-controls-enabled="false" 
-              arjs-look-controls="smoothingFactor: 0.1"
-              wasd-controls-enabled="false">
-    </a-entity>
+
+    <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    // Get URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const modelPath = urlParams.get('model');
-    const modelName = urlParams.get('name');
+    // const modelIds = ['dish1Entity', 'dish2Entity', 'dish3Entity', 'dish4Entity', 'dish5Entity'];
+    // const descriptions = [
+    //   { title: "Dish 1", price: "$10.99", details: "Description for dish 1." },
+    //   { title: "Dish 2", price: "$11.99", details: "Description for dish 2." },
+    //   { title: "Dish 3", price: "$12.99", details: "Description for dish 3." },
+    //   { title: "Dish 4", price: "$13.99", details: "Description for dish 4." },
+    //   { title: "Dish 5", price: "$14.99", details: "Description for dish 5." }
+    // ];
 
-    // Debug logging function
+    let currentIndex = 0;
+    let isDragging = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+    let flipState = false;
+
     const debug = (msg) => {
       const panel = document.getElementById('debugPanel');
       const timestamp = new Date().toLocaleTimeString();
@@ -227,84 +120,94 @@
       console.log(msg);
     };
 
-    // Update model name in info panel
-    if (modelName) {
-      document.getElementById('modelName').textContent = modelName;
+    function showModel(index) {
+      modelIds.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute('visible', i === index);
+      });
+      updateInfoPanel(index);
+      debug(`Model changed to index ${index} (${modelIds[index]})`);
     }
 
-    // Camera initialization tracking
-    let cameraInitialized = false;
-    let arSceneReady = false;
+    function updateInfoPanel(index) {
+      const info = descriptions[index];
+      const panel = document.getElementById('infoPanel');
+      panel.innerHTML = `<strong>${info.title}</strong><br>${info.details}<br><em>Price: ${info.price}</em>`;
+    }
 
-    // Function to normalize model size
-    function normalizeModelSize(model, targetSize = 1) {
-      if (typeof THREE === 'undefined' || !model) {
-        console.warn("THREE.js or model element not available for normalization.");
-        return;
+    function resetModelTransform() {
+      const model = document.getElementById(modelIds[currentIndex]);
+      if (model) {
+        model.setAttribute('rotation', { x: 0, y: 0, z: 0 });
+        flipState = false;
       }
+    }
 
+    // function bindHtmlButtons() {
+    //   const next = document.getElementById('nextBtn');
+    //   const prev = document.getElementById('prevBtn');
+
+    //   next.addEventListener('click', () => {
+    //     currentIndex = (currentIndex + 1) % modelIds.length;
+    //     resetModelTransform();
+    //     showModel(currentIndex);
+    //     debug('Next button clicked');
+    //   });
+
+    //   prev.addEventListener('click', () => {
+    //     currentIndex = (currentIndex - 1 + modelIds.length) % modelIds.length;
+    //     resetModelTransform();
+    //     showModel(currentIndex);
+    //     debug('Previous button clicked');
+    //   });
+    // }
+
+    function normalizeModelSize(model, targetSize = 1.5) {
       const mesh = model.getObject3D('mesh');
-      if (!mesh) {
-        console.warn("Mesh not found for normalization.");
-        return;
-      }
+      if (!mesh) return;
 
       const box = new THREE.Box3().setFromObject(mesh);
       const size = box.getSize(new THREE.Vector3());
       const maxDim = Math.max(size.x, size.y, size.z);
-      if (maxDim === 0) {
-        console.warn("Model dimensions are zero, cannot normalize.");
-        return;
-      }
-
       const scaleFactor = targetSize / maxDim;
-      model.setAttribute('scale', { x: scaleFactor, y: scaleFactor, z: scaleFactor });
-      debug(`Normalized model with scale factor: ${scaleFactor.toFixed(3)}`);
+
+      model.setAttribute('scale', {
+        x: scaleFactor,
+        y: scaleFactor,
+        z: scaleFactor
+      });
+
+      debug(`Normalized model: ${model.id} with scale factor: ${scaleFactor.toFixed(3)}`);
     }
 
-    // Model interaction variables
-    let isDragging = false;
-    let lastMouseX = 0;
-    let lastMouseY = 0;
-    let rotationX = 0;
-    let rotationY = 0;
-    let flipState = false;
-
-    // Function to reset model transform
-    function resetModelTransform() {
-      const model = document.getElementById('modelEntity');
-      if (model) {
-        model.setAttribute('rotation', { x: 0, y: 0, z: 0 });
-        rotationX = 0;
-        rotationY = 0;
-        flipState = false;
-        debug('Model transform reset');
-      }
-    }
-
-    // Add model interaction with proper touch handling
     function addModelInteraction() {
       const scene = document.querySelector('a-scene');
-      const model = document.getElementById('modelEntity');
+      let model = document.getElementById(modelIds[currentIndex]);
+      let rotationX = 0;
+      let rotationY = 0;
 
-      // Mouse events
-      scene.addEventListener('mousedown', (e) => {
-        if (e.target.tagName === 'BUTTON') return; // Ignore button clicks
+      function updateModelRef() {
+        model = document.getElementById(modelIds[currentIndex]);
+        const rot = model.getAttribute('rotation') || { x: 0, y: 0, z: 0 };
+        rotationX = rot.x;
+        rotationY = rot.y;
+      }
+
+      scene.addEventListener('pointerdown', (e) => {
         isDragging = true;
         lastMouseX = e.clientX;
         lastMouseY = e.clientY;
-        debug('Started mouse dragging');
-        e.preventDefault();
+        updateModelRef();
       });
 
-      scene.addEventListener('mousemove', (e) => {
+      scene.addEventListener('pointermove', (e) => {
         if (!isDragging || !model) return;
 
         const dx = e.clientX - lastMouseX;
         const dy = e.clientY - lastMouseY;
 
-        rotationY += dx * 0.5;
-        rotationX -= dy * 0.5;
+        rotationY += dx * 0.5; // horizontal drag → rotate Y
+        rotationX -= dy * 0.5; // vertical drag → rotate X
 
         model.setAttribute('rotation', {
           x: rotationX,
@@ -314,302 +217,65 @@
 
         lastMouseX = e.clientX;
         lastMouseY = e.clientY;
-        e.preventDefault();
       });
 
-      scene.addEventListener('mouseup', (e) => {
+      scene.addEventListener('pointerup', () => {
         isDragging = false;
-        debug('Stopped mouse dragging');
       });
 
-      // Touch events for mobile
-      scene.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 1) {
-          isDragging = true;
-          lastMouseX = e.touches[0].clientX;
-          lastMouseY = e.touches[0].clientY;
-          debug('Started touch dragging');
-          e.preventDefault();
-        }
-      });
-
-      scene.addEventListener('touchmove', (e) => {
-        if (!isDragging || !model || e.touches.length !== 1) return;
-
-        const dx = e.touches[0].clientX - lastMouseX;
-        const dy = e.touches[0].clientY - lastMouseY;
-
-        rotationY += dx * 0.5;
-        rotationX -= dy * 0.5;
-
+      scene.addEventListener('dblclick', () => {
+        model = document.getElementById(modelIds[currentIndex]);
+        if (!model) return;
+        const currentRot = model.getAttribute('rotation') || { x: 0, y: 0, z: 0 };
+        flipState = !flipState;
         model.setAttribute('rotation', {
-          x: rotationX,
-          y: rotationY,
-          z: 0
+          x: currentRot.x,
+          y: currentRot.y + 180,
+          z: currentRot.z
+        });
+        debug(`Model flipped ${flipState ? 'ON' : 'OFF'}`);
+      });
+    }
+
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (currentItemId) {
+        const item = findFoodItem(currentItemId);
+        if (item && item.modelPath) {
+          debug('Setting model path: ' + item.modelPath);
+          const assetItem = document.getElementById('assetItem');
+          assetItem.setAttribute('src', '/static/' + item.modelPath);
+        }
+      }
+
+      // bindHtmlButtons();
+
+      modelIds.forEach(id => {
+        const entity = document.getElementById(id);
+        entity.addEventListener('model-loaded', () => {
+          normalizeModelSize(entity, 1);
+        });
+      });
+
+      const marker = document.getElementById('carouselMarker');
+      const infoPanel = document.getElementById('infoPanel');
+
+      if (marker) {
+        marker.addEventListener('markerFound', () => {
+          debug('Marker FOUND');
+          infoPanel.style.display = 'block';
+          showModel(currentIndex);
         });
 
-        lastMouseX = e.touches[0].clientX;
-        lastMouseY = e.touches[0].clientY;
-        e.preventDefault();
-      });
-
-      scene.addEventListener('touchend', (e) => {
-        isDragging = false;
-        debug('Stopped touch dragging');
-      });
-
-      // Double tap for flip
-      let lastTap = 0;
-      scene.addEventListener('touchend', (e) => {
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - lastTap;
-        
-        if (tapLength < 500 && tapLength > 0) {
-          if (!model) return;
-          flipState = !flipState;
-          model.setAttribute('rotation', {
-            x: rotationX,
-            y: rotationY + (flipState ? 180 : -180),
-            z: 0
-          });
-          debug(`Model flipped ${flipState ? 'ON' : 'OFF'}`);
-          e.preventDefault();
-        }
-        lastTap = currentTime;
-      });
-    }
-
-    // Initialize camera and AR scene
-    function initializeAR() {
-      debug('Initializing AR...');
-      
-      const scene = document.querySelector('a-scene');
-      const modelEntity = document.getElementById('modelEntity');
-      const assetItem = document.querySelector('#currentModel');
-      const loadingMessage = document.getElementById('loadingMessage');
-      
-      // Wait for AR.js to be ready
-      scene.addEventListener('arjs-video-loaded', () => {
-        debug('AR camera loaded successfully');
-        cameraInitialized = true;
-        loadingMessage.style.display = 'none';
-        
-        // Load the 3D model if provided
-        if (modelPath) {
-          debug('Setting model path: ' + modelPath);
-          // Set the asset source first
-          assetItem.setAttribute('src', '/static/' + modelPath);
-          
-          // Wait for asset to load
-          assetItem.addEventListener('loaded', function onAssetLoaded() {
-            debug('Asset loaded successfully');
-            normalizeModelSize(modelEntity, 0.8); // Slightly smaller for AR
-            addModelInteraction();
-            assetItem.removeEventListener('loaded', onAssetLoaded);
-          });
-          
-          assetItem.addEventListener('error', (error) => {
-            debug('Error loading asset: ' + error);
-            document.getElementById('loadingMessage').textContent = 'Error loading model';
-          });
-        } else {
-          debug('No model path provided');
-        }
-      });
-      
-      // Handle scene ready
-      scene.addEventListener('loaded', () => {
-        debug('A-Frame scene loaded');
-        arSceneReady = true;
-      });
-      
-      // Handle AR.js initialization errors
-      scene.addEventListener('arjs-nft-init-data', (e) => {
-        debug('AR.js initialization error: ' + JSON.stringify(e.detail));
-      });
-    }
-
-    // Handle marker found/lost events
-    const marker = document.querySelector('a-marker');
-    if (marker) {
-      marker.addEventListener('markerFound', () => {
-        debug('Marker found - showing model');
-        const infoPanel = document.getElementById('infoPanel');
-        if (infoPanel) infoPanel.style.display = 'none';
-        
-        const modelEntity = document.getElementById('modelEntity');
-        if (modelEntity) {
-          modelEntity.setAttribute('visible', true);
-          debug('Model visibility set to true');
-        }
-      });
-      
-      marker.addEventListener('markerLost', () => {
-        debug('Marker lost - hiding model');
-        const infoPanel = document.getElementById('infoPanel');
-        if (infoPanel) infoPanel.style.display = 'block';
-        
-        const modelEntity = document.getElementById('modelEntity');
-        if (modelEntity) {
-          modelEntity.setAttribute('visible', false);
-          debug('Model visibility set to false');
-        }
-      });
-    }
-
-    // Improved back button function with comprehensive cleanup
-    function goBack() {
-      debug('Closing AR view...');
-      
-      const scene = document.querySelector('a-scene');
-      const loadingMessage = document.getElementById('loadingMessage');
-      
-      // Show loading message during cleanup
-      if (loadingMessage) {
-        loadingMessage.innerHTML = '<i class="fas fa-spinner fa-spin"></i><br>Closing Camera...';
-        loadingMessage.style.display = 'block';
-      }
-      
-      // Stop all camera streams
-      navigator.mediaDevices.getUserMedia = navigator.mediaDevices.getUserMedia || 
-                                          navigator.webkitGetUserMedia || 
-                                          navigator.mozGetUserMedia;
-      
-      // Find and stop all video streams
-      const videos = document.querySelectorAll('video');
-      videos.forEach(video => {
-        if (video.srcObject) {
-          const tracks = video.srcObject.getTracks();
-          tracks.forEach(track => {
-            track.stop();
-            debug('Camera track stopped: ' + track.kind);
-          });
-          video.srcObject = null;
-        }
-        video.pause();
-        video.load(); // Reset video element
-      });
-      
-      // Stop AR.js system
-      if (scene && scene.systems && scene.systems['arjs']) {
-        try {
-          scene.systems['arjs'].stop();
-          debug('AR.js system stopped');
-        } catch (e) {
-          debug('Error stopping AR.js: ' + e.message);
-        }
-      }
-      
-      // Additional cleanup for AR.js
-      if (window.ARjs && window.ARjs.Context) {
-        try {
-          if (window.ARjs.Context._context) {
-            window.ARjs.Context._context.arController.dispose();
-          }
-        } catch (e) {
-          debug('Error disposing AR context: ' + e.message);
-        }
-      }
-      
-      // Clean up Three.js resources
-      if (scene && scene.object3D) {
-        scene.object3D.traverse((child) => {
-          if (child.geometry) child.geometry.dispose();
-          if (child.material) {
-            if (Array.isArray(child.material)) {
-              child.material.forEach(material => material.dispose());
-            } else {
-              child.material.dispose();
-            }
-          }
+        marker.addEventListener('markerLost', () => {
+          debug('Marker LOST');
+          infoPanel.style.display = 'none';
         });
       }
-      
-      // Small delay to ensure cleanup completes
-      setTimeout(() => {
-        // Navigate back
-        if (document.referrer && document.referrer.includes('/menu')) {
-          window.location.href = document.referrer;
-        } else {
-          window.history.back();
-        }
-      }, 500);
-    }
 
-    // Handle page visibility changes (mobile background/foreground)
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        debug('Page hidden - pausing AR');
-        // Pause camera when page is hidden
-        const videos = document.querySelectorAll('video');
-        videos.forEach(video => {
-          if (video.srcObject) {
-            video.pause();
-          }
-        });
-      } else {
-        debug('Page visible - resuming AR');
-        // Resume camera when page is visible
-        const videos = document.querySelectorAll('video');
-        videos.forEach(video => {
-          if (video.srcObject) {
-            video.play();
-          }
-        });
-      }
+      addModelInteraction();
     });
+  </script>
+</body>
 
-    // Handle browser back button
-    window.addEventListener('beforeunload', () => {
-      debug('Page unloading - cleaning up');
-      // Quick cleanup on page unload
-      const videos = document.querySelectorAll('video');
-      videos.forEach(video => {
-        if (video.srcObject) {
-          const tracks = video.srcObject.getTracks();
-          tracks.forEach(track => track.stop());
-        }
-      });
-    });
-
-    // Handle browser back/forward navigation
-    window.addEventListener('popstate', (e) => {
-      debug('Navigation detected - cleaning up');
-      goBack();
-    });
-
-    // Toggle debug panel with 'D' key
-    document.addEventListener('keydown', (e) => {
-      if (e.key.toLowerCase() === 'd') {
-        const debugPanel = document.getElementById('debugPanel');
-        debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
-      }
-    });
-
-    // Prevent zoom on mobile devices
-    document.addEventListener('touchmove', (e) => {
-      if (e.touches.length > 1) {
-        e.preventDefault(); // Prevent pinch zoom
-      }
-    }, { passive: false });
-
-    document.addEventListener('gesturestart', (e) => {
-      e.preventDefault(); // Prevent gesture zoom
-    });
-
-    document.addEventListener('gesturechange', (e) => {
-      e.preventDefault(); // Prevent gesture zoom
-    });
-
-    document.addEventListener('gestureend', (e) => {
-      e.preventDefault(); // Prevent gesture zoom
-    });
-
-    // Initialize AR when DOM is ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeAR);
-    } else {
-      initializeAR();
-    }
-
-    debug('AR View initialized with model: ' + (modelPath || 'none'));
+</html>

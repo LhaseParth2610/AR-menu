@@ -198,88 +198,8 @@ function findFoodItem(idToFind) {
     return null;
 }
 
-// Function to normalize model size (Copied from fullar.html)
-function normalizeModelSize(model, targetSize = 1) {
-    // Ensure Three.js is available (added A-Frame script includes THREE.js)
-    if (typeof THREE === 'undefined' || !model) {
-        console.warn("THREE.js or model element not available for normalization.");
-        return;
-    }
 
-    const mesh = model.getObject3D('mesh');
-    if (!mesh) {
-         console.warn("Mesh not found for normalization.");
-        return;
-    }
 
-    const box = new THREE.Box3().setFromObject(mesh);
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-    if (maxDim === 0) {
-         console.warn("Model dimensions are zero, cannot normalize.");
-         return;
-    }
-
-    const scaleFactor = targetSize / maxDim;
-
-    model.setAttribute('scale', { x: scaleFactor, y: scaleFactor, z: scaleFactor });
-
-    console.log(`Normalized model: ${model.id || 'entity'} with scale factor: ${scaleFactor.toFixed(3)}`);
-}
-
-// Function to open AR view (Modified)
-function openARView() {
-    console.log('openARView function called');
-    // Check if an item is currently selected
-    if (currentItemId !== null) {
-        const foodItem = findFoodItem(currentItemId);
-        if (foodItem && foodItem.modelPath) {
-            console.log(`Opening AR view for item ${currentItemId} with model: ${foodItem.modelPath}`);
-            // Redirect to fullar.html with the model path as a parameter
-            window.location.href = `/fullar?model=${encodeURIComponent('/static/' + foodItem.modelPath)}&name=${encodeURIComponent(foodItem.name)}`;
-        } else {
-            console.error("Could not find model path for item ID:", currentItemId);
-            // Optionally show an error message to the user
-            alert("3D model not available for this item.");
-        }
-    } else {
-        console.error("No food item selected for AR view.");
-        alert("Please select a food item first.");
-    }
-}
-
-// Function to close AR view modal (New)
-function closeARView() {
-    console.log('Attempting to close AR view...');
-    const arViewModal = document.getElementById('arViewModal');
-    const arSceneEl = document.querySelector('#arViewModal a-scene'); // Get the A-Frame scene element
-
-    if (arViewModal) {
-        // *** Stop the AR scene and camera ***
-        if (arSceneEl && arSceneEl.systems && arSceneEl.systems['arjs']) {
-            console.log("Stopping AR.js scene...");
-            arSceneEl.systems['arjs'].stop();
-            console.log("AR.js stop() called.");
-        } else {
-            console.warn("AR.js system not found on scene element or scene element not found.");
-        }
-
-        arViewModal.style.display = 'none';
-        document.body.style.overflow = 'auto'; // Restore scrolling
-        console.log('AR modal display set to none.');
-
-         // Clear the model source when closing to prevent showing previous model briefly
-         const arModelEntity = document.getElementById('arFoodModelEntity');
-         if (arModelEntity) arModelEntity.removeAttribute('gltf-model');
-         if (arModelEntity) arModelEntity.setAttribute('visible', false); // Ensure hidden
-         console.log('AR model source cleared and hidden.');
-    }
-     // Re-open food detail modal if desired after closing AR
-     // const foodDetailModal = document.getElementById('foodDetailModal');
-     // if (foodDetailModal && currentItemId !== null) {
-     //    openFoodDetail(currentItemId); // Might need logic to prevent re-opening if not intended
-     // }
-}
 
 // Function to go back (likely used on fullar.html or similar)
 function goBack() {
