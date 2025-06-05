@@ -186,7 +186,7 @@
            loading-screen="enabled: false">
     
     <a-assets>
-      <a-asset-item id="currentModel" src="" crossorigin="anonymous"></a-asset-item>
+      <a-asset-item id="currentModel" src=""></a-asset-item>
     </a-assets>
     
     <a-marker type="pattern" 
@@ -200,8 +200,7 @@
                 gltf-model="#currentModel"
                 position="0 0 0.1" 
                 scale="1 1 1"
-                visible="true"
-                animation-mixer>
+                visible="true">
       </a-entity>
     </a-marker>
     
@@ -398,40 +397,20 @@
         // Load the 3D model if provided
         if (modelPath) {
           debug('Setting model path: ' + modelPath);
-          // Remove any duplicate /static/ prefix
-          const cleanPath = modelPath.replace(/^\/static\//, '');
-          const fullPath = '/static/' + cleanPath;
-          debug('Full model path: ' + fullPath);
-          
           // Set the asset source first
-          assetItem.setAttribute('src', fullPath);
+          assetItem.setAttribute('src', '/static/' + modelPath);
           
           // Wait for asset to load
           assetItem.addEventListener('loaded', function onAssetLoaded() {
             debug('Asset loaded successfully');
-            // Add a small delay to ensure the model is ready
-            setTimeout(() => {
-              normalizeModelSize(modelEntity, 0.8);
-              addModelInteraction();
-              debug('Model setup complete');
-            }, 100);
+            normalizeModelSize(modelEntity, 0.8); // Slightly smaller for AR
+            addModelInteraction();
             assetItem.removeEventListener('loaded', onAssetLoaded);
           });
           
-          // Add more detailed error handling
           assetItem.addEventListener('error', (error) => {
             debug('Error loading asset: ' + error);
-            debug('Failed path: ' + fullPath);
             document.getElementById('loadingMessage').textContent = 'Error loading model';
-          });
-
-          // Also listen for model-loaded event on the entity
-          modelEntity.addEventListener('model-loaded', () => {
-            debug('Model entity loaded successfully');
-          });
-
-          modelEntity.addEventListener('model-error', (error) => {
-            debug('Model entity error: ' + error.detail);
           });
         } else {
           debug('No model path provided');
