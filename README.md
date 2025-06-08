@@ -1,73 +1,114 @@
-# Welcome to your Lovable project
+# TasteAR - Interactive AR Restaurant Menu
 
-## Project info
+TasteAR is an innovative web application that brings restaurant menus to life using Augmented Reality (AR) technology. It allows customers to view 3D models of food items in AR, providing an immersive dining experience before ordering.
 
-**URL**: https://lovable.dev/projects/d5cc1d1d-eda7-4968-9f04-9304b9fe80b1
+## 🌟 Features
 
-## How can I edit this code?
+- **Interactive 3D Menu**: Browse food items with 3D model previews
+- **AR Experience**: View food items in Augmented Reality using your device's camera
+- **Category Navigation**: Easy browsing through different food categories
+- **Detailed Food Information**: View ingredients, nutritional info, and preparation time
+- **Responsive Design**: Works seamlessly on both desktop and mobile devices
+- **Modern UI**: Clean and intuitive user interface
 
-There are several ways of editing your application.
+## 🛠️ Technologies Used
 
-**Use Lovable**
+- **Frontend**:
+  - HTML5, CSS3, JavaScript
+  - A-Frame.js for AR functionality
+  - AR.js for marker-based AR
+  - Google's Model Viewer for 3D previews
+  - Font Awesome for icons
+  - Google Fonts for typography
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d5cc1d1d-eda7-4968-9f04-9304b9fe80b1) and start prompting.
+- **Backend**:
+  - Python Flask
+  - Static file serving
 
-Changes made via Lovable will be committed automatically to this repo.
+## 📋 Prerequisites
 
-**Use your preferred IDE**
+- Python 3.7 or higher
+- Modern web browser with WebGL support
+- Device with camera for AR functionality
+- AR marker (provided in the application)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🚀 Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/3DModel.git
+   cd 3DModel
+   ```
 
-Follow these steps:
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+4. Run the application:
+   ```bash
+   python app.py
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+5. Open your browser and navigate to:
+   ```
+   http://localhost:5000
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+## 📱 Usage
+
+1. **Browse Menu**:
+   - Navigate through different food categories
+   - Click on food items to view details
+
+2. **View 3D Models**:
+   - Each food item has a 3D preview
+   - Interact with the model using mouse/touch controls
+
+3. **AR Experience**:
+   - Click "View in AR" on any food item
+   - Allow camera access when prompted
+   - Point your camera at the AR marker
+   - View the 3D model in your real environment
+
+## 📁 Project Structure
+
+```
+3DModel/
+├── static/
+│   ├── assets/         # AR markers and static assets
+│   ├── models/         # 3D model files
+│   ├── menu-data.js    # Food item data
+│   ├── menu-script.js  # Menu functionality
+│   ├── script.js       # General functionality
+│   └── styles.css      # Application styles
+├── templates/
+│   ├── index.html      # Landing page
+│   ├── menu.html       # Menu page
+│   └── fullar.html     # AR view page
+├── app.py             # Flask application
+├── requirements.txt   # Python dependencies
+└── README.md         # This file
 ```
 
-**Edit a file directly in GitHub**
+## 🔧 Configuration
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- AR marker settings can be modified in `fullar.html`
+- 3D model settings can be adjusted in `menu-script.js`
+- Food items can be added/modified in `menu-data.js`
 
-**Use GitHub Codespaces**
+## 🤝 Contributing
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## What technologies are used for this project?
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/d5cc1d1d-eda7-4968-9f04-9304b9fe80b1) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
