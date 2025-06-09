@@ -589,3 +589,9 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Reset settings when page is closed or unloaded
+window.addEventListener('beforeunload', function() {
+    // Clear the saved settings from localStorage
+    localStorage.removeItem('menuSettings');
+});
