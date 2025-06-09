@@ -249,7 +249,7 @@ const menuData = {
             id: 17,
             name: "Ice Cream Sundae",
             description: "Vanilla ice cream with chocolate sauce, nuts, and a cherry on top",
-            price: "₹5.99",
+            price: "₹599",
             priceValue: 599,
             type: "veg",
             serves: "1 person",

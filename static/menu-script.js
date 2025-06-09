@@ -187,14 +187,14 @@ function loadCategory(category) {
                 <i class="fas fa-utensils"></i>
                 <p>No items in ${categoryNames[category]} match all your selected dietary preferences: ${preferences}</p>
                 <p class="sub-message">Try selecting fewer preferences or check other categories</p>
-                <button onclick="resetSettings()" class="reset-filters-btn">Reset Filters</button>
+                <button onclick="resetSettingsAndReload()" class="reset-filters-btn">Reset Filters</button>
             `;
         } else {
             message = `
                 <i class="fas fa-search"></i>
                 <p>No items match your current price range</p>
                 <p class="sub-message">Try adjusting your price range or check other categories</p>
-                <button onclick="resetSettings()" class="reset-filters-btn">Reset Filters</button>
+                <button onclick="resetSettingsAndReload()" class="reset-filters-btn">Reset Filters</button>
             `;
         }
         
@@ -595,3 +595,37 @@ window.addEventListener('beforeunload', function() {
     // Clear the saved settings from localStorage
     localStorage.removeItem('menuSettings');
 });
+
+// Add new function to handle reset and reload
+function resetSettingsAndReload() {
+    // Reset current settings to default values
+    currentSettings = {
+        priceRange: { min: 0, max: 2000 },
+        sortOrder: 'default',
+        dietaryPreferences: [],
+        language: 'en'
+    };
+
+    // Reset UI elements
+    document.getElementById('priceMin').value = 0;
+    document.getElementById('priceMax').value = 2000;
+    updatePriceDisplay();
+
+    // Reset sort order
+    document.getElementById('sortOrder').value = 'default';
+
+    // Reset all dietary preference checkboxes
+    const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+
+    // Reset language
+    document.getElementById('language').value = 'en';
+
+    // Save reset settings to localStorage
+    localStorage.setItem('menuSettings', JSON.stringify(currentSettings));
+
+    // Reload current category with reset settings
+    loadCategory(currentCategory);
+}
