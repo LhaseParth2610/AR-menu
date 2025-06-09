@@ -629,3 +629,5 @@ function resetSettingsAndReload() {
     // Reload current category with reset settings
     loadCategory(currentCategory);
 }
+
+//just checking
