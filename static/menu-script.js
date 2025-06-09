@@ -14,12 +14,21 @@ let currentCategory = 'bestsellers';
 // let scene, camera, renderer; // Three.js variables - assuming these are not needed for current menu display
 let currentItemId = null; // Variable to store the ID of the currently displayed item
 
+// Settings state management
+let currentSettings = {
+    priceRange: { min: 0, max: 2000 },
+    sortOrder: 'default',
+    dietaryPreferences: [],
+    language: 'en'
+};
+
 // Initialize the menu page
 document.addEventListener('DOMContentLoaded', function() {
+    initializeSettings();
     loadCategory(currentCategory);
     setupCategoryNavigation();
     // Check if init3DViewer or animate3DScene are still relevant or can be removed.
-    // Assuming Three.js specific setup is no longer required for the menu list view.
+
     
     // Add smooth entrance animations
     setTimeout(() => {
@@ -29,6 +38,100 @@ document.addEventListener('DOMContentLoaded', function() {
         if (content) content.style.opacity = '1';
     }, 300);
 });
+
+// Initialize settings from localStorage if available
+function initializeSettings() {
+    const savedSettings = localStorage.getItem('menuSettings');
+    if (savedSettings) {
+        currentSettings = JSON.parse(savedSettings);
+        applySavedSettings();
+    }
+}
+
+// Apply saved settings to UI
+function applySavedSettings() {
+    // Price range
+    document.getElementById('priceMin').value = currentSettings.priceRange.min;
+    document.getElementById('priceMax').value = currentSettings.priceRange.max;
+    updatePriceDisplay();
+
+    // Sort order
+    document.getElementById('sortOrder').value = currentSettings.sortOrder;
+
+    // Dietary preferences
+    const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = currentSettings.dietaryPreferences.includes(checkbox.value);
+    });
+
+    // Language
+    document.getElementById('language').value = currentSettings.language;
+}
+
+// Update price display values
+function updatePriceDisplay() {
+    const minValue = document.getElementById('priceMin').value;
+    const maxValue = document.getElementById('priceMax').value;
+    document.getElementById('priceMinValue').textContent = `₹${minValue}`;
+    document.getElementById('priceMaxValue').textContent = `₹${maxValue}`;
+}
+
+// Handle price range slider changes
+document.getElementById('priceMin').addEventListener('input', function() {
+    const minValue = parseInt(this.value);
+    const maxValue = parseInt(document.getElementById('priceMax').value);
+    if (minValue > maxValue) {
+        this.value = maxValue;
+    }
+    updatePriceDisplay();
+});
+
+document.getElementById('priceMax').addEventListener('input', function() {
+    const maxValue = parseInt(this.value);
+    const minValue = parseInt(document.getElementById('priceMin').value);
+    if (maxValue < minValue) {
+        this.value = minValue;
+    }
+    updatePriceDisplay();
+});
+
+// Apply settings and filter menu
+function applySettings() {
+    // Update current settings
+    currentSettings.priceRange = {
+        min: parseInt(document.getElementById('priceMin').value),
+        max: parseInt(document.getElementById('priceMax').value)
+    };
+    currentSettings.sortOrder = document.getElementById('sortOrder').value;
+    
+    // Get selected dietary preferences
+    const selectedPreferences = Array.from(
+        document.querySelectorAll('.checkbox-group input[type="checkbox"]:checked')
+    ).map(checkbox => checkbox.value);
+    
+    console.log('Selected dietary preferences:', selectedPreferences);
+    currentSettings.dietaryPreferences = selectedPreferences;
+    
+    currentSettings.language = document.getElementById('language').value;
+
+    // Save settings to localStorage
+    localStorage.setItem('menuSettings', JSON.stringify(currentSettings));
+
+    // Apply filters and reload current category
+    loadCategory(currentCategory);
+    closeSettings();
+}
+
+// Reset settings to default
+function resetSettings() {
+    currentSettings = {
+        priceRange: { min: 0, max: 2000 },
+        sortOrder: 'default',
+        dietaryPreferences: [],
+        language: 'en'
+    };
+    applySavedSettings();
+}
 
 // Load food items for a specific category
 function loadCategory(category) {
@@ -50,27 +153,74 @@ function loadCategory(category) {
     // Clear existing items
     menuGrid.innerHTML = '';
     
-    // Add loading animation (Optional - re-add if desired)
-    // menuGrid.innerHTML = '<div class="loading">Loading delicious items...</div>'; 
+    // Get items for this category
+    let items = menuData[category] || [];
     
-    setTimeout(() => {
-        menuGrid.innerHTML = '';
+    // Apply filters
+    items = items.filter(item => {
+        // Price range filter
+        const priceInRange = item.priceValue >= currentSettings.priceRange.min && 
+                           item.priceValue <= currentSettings.priceRange.max;
         
-        // Get items for this category
-        const items = menuData[category] || [];
+        // Dietary preferences filter
+        let matchesDietary = true;
+        if (currentSettings.dietaryPreferences.length > 0) {
+            // Item must match ALL selected preferences
+            matchesDietary = currentSettings.dietaryPreferences.every(pref => 
+                item.dietaryTags.includes(pref)
+            );
+        }
         
-        // Create food cards
-        items.forEach((item, index) => {
-            const card = createFoodCard(item);
-            menuGrid.appendChild(card);
-            
-            // Animate card entrance
-            setTimeout(() => {
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, index * 150);
-        });
-    }, 300);
+        return priceInRange && matchesDietary;
+    });
+    
+    // If no items match the filters, show a message
+    if (items.length === 0) {
+        const noItemsMessage = document.createElement('div');
+        noItemsMessage.className = 'no-items-message';
+        
+        // Create a more specific message based on the filters
+        let message = '';
+        if (currentSettings.dietaryPreferences.length > 0) {
+            const preferences = currentSettings.dietaryPreferences.join(', ');
+            message = `
+                <i class="fas fa-utensils"></i>
+                <p>No items in ${categoryNames[category]} match all your selected dietary preferences: ${preferences}</p>
+                <p class="sub-message">Try selecting fewer preferences or check other categories</p>
+                <button onclick="resetSettings()" class="reset-filters-btn">Reset Filters</button>
+            `;
+        } else {
+            message = `
+                <i class="fas fa-search"></i>
+                <p>No items match your current price range</p>
+                <p class="sub-message">Try adjusting your price range or check other categories</p>
+                <button onclick="resetSettings()" class="reset-filters-btn">Reset Filters</button>
+            `;
+        }
+        
+        noItemsMessage.innerHTML = message;
+        menuGrid.appendChild(noItemsMessage);
+        return;
+    }
+    
+    // Apply sorting
+    if (currentSettings.sortOrder === 'low-to-high') {
+        items.sort((a, b) => a.priceValue - b.priceValue);
+    } else if (currentSettings.sortOrder === 'high-to-low') {
+        items.sort((a, b) => b.priceValue - a.priceValue);
+    }
+    
+    // Create food cards
+    items.forEach((item, index) => {
+        const card = createFoodCard(item);
+        menuGrid.appendChild(card);
+        
+        // Animate card entrance
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 150);
+    });
 }
 
 // Create a food card element
@@ -216,10 +366,6 @@ function findFoodItem(idToFind) {
     }
     return null;
 }
-
-
-
-
 
 function goBack() {
     window.history.back();
@@ -397,3 +543,49 @@ function navigatePreviousItem() {
 
 // You'll need to add buttons or swipe listeners in menu.html
 // to call navigateNextItem() and navigatePreviousItem()
+
+// Update the CSS for the no items message
+const style = document.createElement('style');
+style.textContent = `
+    .no-items-message {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+        background: #f9f9f9;
+        border-radius: 8px;
+        margin: 20px;
+    }
+    
+    .no-items-message i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        color: #999;
+    }
+    
+    .no-items-message p {
+        margin-bottom: 12px;
+        font-size: 18px;
+    }
+    
+    .no-items-message .sub-message {
+        font-size: 14px;
+        color: #888;
+        margin-bottom: 20px;
+    }
+    
+    .reset-filters-btn {
+        padding: 8px 16px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s;
+    }
+    
+    .reset-filters-btn:hover {
+        background-color: #45a049;
+    }
+`;
+document.head.appendChild(style);

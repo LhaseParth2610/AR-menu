@@ -233,29 +233,46 @@ Overview:
                 </div>
                 <div class="modal-body">
                     <div class="setting-item">
-                        <label>Language</label>
-                        <select>
-                            <option>English</option>
-                            <option>Spanish</option>
-                            <option>French</option>
+                        <label>Price Range</label>
+                        <div class="price-range">
+                            <div class="price-slider">
+                                <input type="range" id="priceMin" min="0" max="2000" step="50" value="0">
+                                <input type="range" id="priceMax" min="0" max="2000" step="50" value="2000">
+                            </div>
+                            <div class="price-values">
+                                <span id="priceMinValue">₹0</span> - <span id="priceMaxValue">₹2000</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label>Sort By</label>
+                        <select id="sortOrder">
+                            <option value="default">Default</option>
+                            <option value="low-to-high">Price: Low to High</option>
+                            <option value="high-to-low">Price: High to Low</option>
                         </select>
                     </div>
                     <div class="setting-item">
                         <label>Dietary Preferences</label>
                         <div class="checkbox-group">
-                            <label><input type="checkbox"> Vegetarian</label>
-                            <label><input type="checkbox"> Vegan</label>
-                            <label><input type="checkbox"> Gluten-Free</label>
-                        </select>
+                            <label><input type="checkbox" value="vegetarian"> Vegetarian</label>
+                            <label><input type="checkbox" value="vegan"> Vegan</label>
+                            <label><input type="checkbox" value="gluten-free"> Gluten Free</label>
+                            <label><input type="checkbox" value="contains-dairy"> Contains Dairy</label>
+                        </div>
                     </div>
                     <div class="setting-item">
-                        <label>AR Quality</label>
-                        <select>
-                            <option>High</option>
-                            <option>Medium</option>
-                            <option>Low</option>
+                        <label>Language</label>
+                        <select id="language">
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
                         </select>
                     </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="apply-btn" onclick="applySettings()">Apply Changes</button>
+                    <button class="reset-btn" onclick="resetSettings()">Reset to Default</button>
                 </div>
             </div>
         </div>
