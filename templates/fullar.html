@@ -28,7 +28,7 @@ Overview:
       font-family: Arial, sans-serif;
     }
 
-    #debugPanel {
+    /* #debugPanel {
       position: fixed;
       bottom: 120px;
       left: 0;
@@ -42,7 +42,7 @@ Overview:
       box-sizing: border-box;
       overflow-y: auto;
       z-index: 999;
-    }
+    } */
 
     #infoPanel {
       position: fixed;
@@ -114,9 +114,9 @@ Overview:
     <div class="spinner"></div>
     <p>Loading AR Model...</p>
   </div>
-
+<!-- 
   <div id="infoPanel"></div>
-  <div id="debugPanel">Debug log:</div>
+  <div id="debugPanel">Debug log:</div> -->
 
   <a-scene embedded arjs renderer="colorManagement: true; physicallyCorrectLights: true;" vr-mode-ui="enabled: false">
     <a-assets>
@@ -145,20 +145,20 @@ Overview:
     function findFoodItem(idToFind) {
       const numericalId = parseInt(idToFind, 10);
       if (isNaN(numericalId)) {
-        debug('Invalid ID provided: ' + idToFind);
+        // debug('Invalid ID provided: ' + idToFind);
         return null;
       }
 
       // Check if menuData is available
       if (typeof menuData === 'undefined') {
-        debug('Menu data not available');
+        // debug('Menu data not available');
         return null;
       }
 
       for (const category in menuData) {
         const item = menuData[category].find(item => item.id === numericalId);
         if (item) {
-          debug(`Found item in category '${category}': ${item.name}`);
+          // debug(`Found item in category '${category}': ${item.name}`);
           return item;
         }
       }
@@ -175,13 +175,13 @@ Overview:
     let rotationX = 0;
     let rotationY = 0;
 
-    const debug = (msg) => {
-      const panel = document.getElementById('debugPanel');
-      const timestamp = new Date().toLocaleTimeString();
-      panel.innerHTML += `<br><strong>[${timestamp}]</strong> ${msg}`;
-      panel.scrollTop = panel.scrollHeight;
-      console.log(msg);
-    };
+    // const debug = (msg) => {
+    //   const panel = document.getElementById('debugPanel');
+    //   const timestamp = new Date().toLocaleTimeString();
+    //   panel.innerHTML += `<br><strong>[${timestamp}]</strong> ${msg}`;
+    //   panel.scrollTop = panel.scrollHeight;
+    //   console.log(msg);
+    // };
 
     function showLoadingIndicator(show) {
       const indicator = document.getElementById('loadingIndicator');
@@ -202,7 +202,7 @@ Overview:
     function normalizeModelSize(model, targetSize = 1) {
       const mesh = model.getObject3D('mesh');
       if (!mesh) {
-        debug('No mesh found for normalization');
+        // debug('No mesh found for normalization');
         return;
       }
 
@@ -217,12 +217,12 @@ Overview:
         z: scaleFactor
       });
 
-      debug(`Model normalized with scale factor: ${scaleFactor.toFixed(3)}`);
+      // debug(`Model normalized with scale factor: ${scaleFactor.toFixed(3)}`);
     }
 
     function loadModel(modelPath) {
       showLoadingIndicator(true);
-      debug(`Loading model: ${modelPath}`);
+      // debug(`Loading model: ${modelPath}`);
       
       const assetItem = document.getElementById('currentModel');
       const modelEntity = document.getElementById('foodModel');
@@ -245,7 +245,7 @@ Overview:
         isDragging = true;
         lastMouseX = e.clientX;
         lastMouseY = e.clientY;
-        debug('Pointer down - starting drag');
+        // debug('Pointer down - starting drag');
       });
 
       scene.addEventListener('pointermove', (e) => {
@@ -284,7 +284,7 @@ Overview:
             y: rotationY,
             z: 0
           });
-          debug('Model flipped 180 degrees');
+          // debug('Model flipped 180 degrees');
         }
       });
     }
@@ -295,25 +295,25 @@ Overview:
 
     // Wait for menu data to be loaded before initializing
     function initializeApp() {
-      debug('Initializing AR Food Viewer');
+      // debug('Initializing AR Food Viewer');
       
       // Get the item ID from localStorage
       const itemId = localStorage.getItem('currentArItemId');
-      debug('Item ID from localStorage: ' + itemId);
+      // debug('Item ID from localStorage: ' + itemId);
       
       if (itemId) {
         currentItem = findFoodItem(parseInt(itemId, 10));
         if (currentItem && currentItem.modelPath) {
-          debug(`Found item: ${currentItem.name} with model: ${currentItem.modelPath}`);
+          // debug(`Found item: ${currentItem.name} with model: ${currentItem.modelPath}`);
           loadModel(currentItem.modelPath);
           // Clear the stored ID after use
           localStorage.removeItem('currentArItemId');
         } else {
-          debug('Item not found or no model path available');
+          // debug('Item not found or no model path available');
           showLoadingIndicator(false);
         }
       } else {
-        debug('No item ID found, using default model');
+        // debug('No item ID found, using default model');
         currentItem = { name: "Default Item", price: "₹299" };
         showLoadingIndicator(false);
       }
@@ -322,13 +322,13 @@ Overview:
       const modelEntity = document.getElementById('foodModel');
       
       modelEntity.addEventListener('model-loaded', () => {
-        debug('Model loaded successfully');
+        // debug('Model loaded successfully');
         normalizeModelSize(modelEntity, 1);
         showLoadingIndicator(false);
       });
 
       modelEntity.addEventListener('model-error', (e) => {
-        debug('Model loading error: ' + e.detail);
+        // debug('Model loading error: ' + e.detail);
         showLoadingIndicator(false);
       });
 
@@ -337,7 +337,7 @@ Overview:
       const infoPanel = document.getElementById('infoPanel');
 
       marker.addEventListener('markerFound', () => {
-        debug('Marker FOUND');
+        // debug('Marker FOUND');
         infoPanel.style.display = 'block';
         if (currentItem) {
           updateInfoPanel(currentItem);
@@ -345,33 +345,33 @@ Overview:
       });
 
       marker.addEventListener('markerLost', () => {
-        debug('Marker LOST');
+        // debug('Marker LOST');
         infoPanel.style.display = 'none';
       });
 
       // Add model interaction
       addModelInteraction();
       
-      debug('AR Scene initialized successfully');
+      // debug('AR Scene initialized successfully');
     }
 
     // Initialize when DOM is loaded and menu data is available
     window.addEventListener('DOMContentLoaded', () => {
-      debug('DOM Content Loaded');
+      // debug('DOM Content Loaded');
       
       // Check if menuData is already loaded
       if (typeof menuData !== 'undefined') {
-        debug('Menu data is available, initializing app');
+        // debug('Menu data is available, initializing app');
         initializeApp();
       } else {
-        debug('Menu data not yet loaded, waiting...');
+        // debug('Menu data not yet loaded, waiting...');
         // Wait a bit for the script to load
         setTimeout(() => {
           if (typeof menuData !== 'undefined') {
-            debug('Menu data loaded after delay, initializing app');
+            // debug('Menu data loaded after delay, initializing app');
             initializeApp();
           } else {
-            debug('ERROR: Menu data failed to load');
+            // debug('ERROR: Menu data failed to load');
             showLoadingIndicator(false);
             // Show error message
             const panel = document.getElementById('infoPanel');

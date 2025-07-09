@@ -233,7 +233,7 @@ function createFoodCard(item) {
     
     card.innerHTML = `
         <div class="food-image">
-            <div class="food-icon">${item.icon}</div>
+            <img src="${item.image}" alt="${item.name}" class="food-img" />
             <div class="food-badges">
                 <span class="food-badge ${item.type}">${item.type === 'veg' ? 'VEG' : 'NON-VEG'}</span>
                 <span class="price-badge">${item.price}</span>

@@ -23,6 +23,7 @@ const menuData = {
             calories: "650 cal",
             prepTime: "15 mins",
             ingredients: ["Chicken Patty", "Cheddar", "Lettuce", "Special Sauce"],
+            image:"/static/assets/burger.jpg",
             icon: "🍔",
             modelPath: "models/dish1.glb",
             dietaryTags: ["non-vegetarian", "contains-gluten", "contains-dairy"]
@@ -38,6 +39,7 @@ const menuData = {
             calories: "420 cal",
             prepTime: "15 mins",
             ingredients: ["Chickpea Patty", "Avocado", "Spinach", "Aioli"],
+            image:"/static/assets/pizza.jpg",
             icon: "🍔",
             modelPath: "models/dish2.glb",
             dietaryTags: ["vegetarian", "vegan", "gluten-free"]
@@ -53,6 +55,7 @@ const menuData = {
             calories: "380 cal",
             prepTime: "18 mins",
             ingredients: ["Corn Patty", "Avocado", "Spinach", "Aioli"],
+            image:"/static/assets/burger2.jpg",
             icon: "🍔",
             modelPath: "models/dish3.glb",
             dietaryTags: ["vegetarian", "vegan", "gluten-free"]
