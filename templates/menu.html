@@ -118,41 +118,33 @@ Overview:
                 <i class="fas fa-utensils"></i>
                 <span>TasteAR Menu</span>
             </div>
-            <button class="settings-btn" onclick="openSettings()">
-                <i class="fas fa-cog"></i>
-            </button>
+            <div class="header-buttons"> 
+                <button class="help-btn" onclick="openHelp()">
+                    <i class="fas fa-question-circle"></i>
+                </button>
+                <button class="settings-btn" onclick="openSettings()">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
         </header>
-
-        <!-- Category Sidebar -->
-        <div class="category-sidebar">
-            <div class="category-item active" data-category="bestsellers">
-                <i class="fas fa-star"></i>
-                <span>Best Sellers</span>
-            </div>
-            <div class="category-item" data-category="pizza">
-                <i class="fas fa-pizza-slice"></i>
-                <span>Pizza</span>
-            </div>
-            <div class="category-item" data-category="burgers">
-                <i class="fas fa-hamburger"></i>
-                <span>Burgers</span>
-            </div>
-            <div class="category-item" data-category="beverages">
-                <i class="fas fa-coffee"></i>
-                <span>Beverages</span>
-            </div>
-            <div class="category-item" data-category="desserts" >
-                <i class="fas fa-ice-cream"></i>
-                <span>Desserts</span>
-            </div>
-        </div>
-
+        
         <!-- Menu Content -->
         <div class="menu-content">
-            <div class="category-title">
+            <div class="category-selection-bar">
                 <h2 id="currentCategory">Best Sellers</h2>
+                <button class="category-toggle-btn" onclick="toggleCategoryPanel()">
+                    <i class="fas fa-list"></i>
+                </button>
             </div>
-            
+
+            <!-- Floating category panel outside normal flow -->
+            <div class="category-panel-overlay" id="categoryPanel">
+                <div class="category-item active" data-category="bestsellers"><i class="fas fa-star"></i><span>Best Sellers</span></div>
+                <div class="category-item" data-category="pizza"><i class="fas fa-pizza-slice"></i><span>Pizza</span></div>
+                <div class="category-item" data-category="burgers"><i class="fas fa-hamburger"></i><span>Burgers</span></div>
+                <div class="category-item" data-category="beverages"><i class="fas fa-coffee"></i><span>Beverages</span></div>
+                <div class="category-item" data-category="desserts"><i class="fas fa-ice-cream"></i><span>Desserts</span></div>
+            </div>
             <div class="menu-grid" id="menuGrid">
                 <!-- Food cards will be populated by JavaScript -->
             </div>
@@ -316,6 +308,21 @@ Overview:
         modelViewer.addEventListener('src-change', () => {
             console.log('Model source changing...');
             loadingDiv.classList.remove('hidden');
+        });
+
+        function toggleCategoryPanel() {
+            const panel = document.getElementById('categoryPanel');
+            panel.classList.toggle('show');
+        }
+
+        function openHelp() {
+            alert("This is where the help modal or FAQ would go.");
+        }
+
+        document.querySelectorAll('.category-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.getElementById('categoryPanel').classList.remove('show');
+            });
         });
 
         // Modified openARView function to properly initialize camera only when needed

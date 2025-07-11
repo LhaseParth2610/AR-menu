@@ -39,7 +39,7 @@ const menuData = {
             calories: "420 cal",
             prepTime: "15 mins",
             ingredients: ["Chickpea Patty", "Avocado", "Spinach", "Aioli"],
-            image:"/static/assets/pizza.jpg",
+            image:"/static/assets/burger1.jpg",
             icon: "🍔",
             modelPath: "models/dish2.glb",
             dietaryTags: ["vegetarian", "vegan", "gluten-free"]
@@ -73,6 +73,7 @@ const menuData = {
             calories: "280 cal",
             prepTime: "20 mins",
             ingredients: ["Corn Patty", "Avocado", "Spinach", "Aioli"],
+            image:"/static/assets/pizza1.jpg",
             icon: "🍕",
             modelPath: "models/dish5.glb",
             dietaryTags: ["vegetarian", "contains-gluten", "contains-dairy"]
@@ -88,6 +89,7 @@ const menuData = {
             calories: "280 cal per slice",
             prepTime: "20 mins",
             ingredients: ["Mozzarella", "Fresh Basil", "Tomato Sauce", "Olive Oil"],
+            image:"/static/assets/pizza2.jpeg",
             icon: "🍕",
             modelPath: "models/dish5.glb",
             dietaryTags: ["vegetarian", "contains-gluten", "contains-dairy"]
@@ -103,6 +105,7 @@ const menuData = {
             calories: "320 cal per slice",
             prepTime: "20 mins",
             ingredients: ["Pepperoni", "Mozzarella", "Pizza Sauce", "Italian Herbs"],
+            image:"/static/assets/pizza3.jpeg",
             icon: "🍕",
             modelPath: "models/dish5.glb",
             dietaryTags: ["non-vegetarian", "contains-gluten", "contains-dairy"]
@@ -118,6 +121,7 @@ const menuData = {
             calories: "260 cal per slice",
             prepTime: "22 mins",
             ingredients: ["Bell Peppers", "Mushrooms", "Olives", "Onions", "Cheese"],
+            image:"/static/assets/pizza4.jpg",
             icon: "🍕",
             modelPath: "models/dish4.glb",
             dietaryTags: ["vegetarian", "contains-gluten", "contains-dairy"]
@@ -135,6 +139,7 @@ const menuData = {
             calories: "650 cal",
             prepTime: "15 mins",
             ingredients: ["Beef Patty", "Cheese", "Lettuce", "Tomato", "Special Sauce"],
+            image:"/static/assets/burger4.jpeg",
             icon: "🍔",
             modelPath: "models/dish3.glb",
             dietaryTags: ["non-vegetarian", "contains-gluten", "contains-dairy"]
@@ -150,6 +155,7 @@ const menuData = {
             calories: "580 cal",
             prepTime: "18 mins",
             ingredients: ["Chicken Breast", "Avocado", "Bacon", "Chipotle Mayo"],
+            image:"/static/assets/burger3.jpg",
             icon: "🍔",
             modelPath: "models/dish2.glb",
             dietaryTags: ["non-vegetarian", "contains-gluten", "contains-dairy"]
@@ -165,6 +171,7 @@ const menuData = {
             calories: "420 cal",
             prepTime: "15 mins",
             ingredients: ["Plant Patty", "Lettuce", "Tomato", "Herb Mayo"],
+            image:"/static/assets/burger1.jpg",
             icon: "🍔",
             modelPath: "models/dish4.glb",
             dietaryTags: ["vegetarian", "vegan", "gluten-free"]
@@ -182,6 +189,7 @@ const menuData = {
             calories: "110 cal",
             prepTime: "3 mins",
             ingredients: ["Fresh Oranges"],
+            image:"/static/assets/orangejuice.jpeg",
             icon: "🧃",
             modelPath: "models/dish4.glb",
             dietaryTags: ["vegetarian", "vegan", "gluten-free"]
@@ -197,6 +205,7 @@ const menuData = {
             calories: "5 cal",
             prepTime: "2 mins",
             ingredients: ["Coffee Beans"],
+            image:"/static/assets/espresso.jpeg",
             icon: "☕",
             modelPath: "models/dish4.glb",
             dietaryTags: ["vegetarian", "vegan", "gluten-free"]
@@ -212,6 +221,7 @@ const menuData = {
             calories: "180 cal",
             prepTime: "5 mins",
             ingredients: ["Mango", "Yogurt", "Honey"],
+            image:"/static/assets/mangoSmoothie.jpeg",
             icon: "🥤",
             modelPath: "models/dish4.glb",
             dietaryTags: ["vegetarian", "contains-dairy"]
@@ -229,6 +239,7 @@ const menuData = {
             calories: "450 cal",
             prepTime: "12 mins",
             ingredients: ["Dark Chocolate", "Butter", "Eggs", "Flour", "Sugar"],
+            image:"/static/assets/dessert1.jpeg",
             icon: "🍰",
             modelPath: "models/dish4.glb",
             dietaryTags: ["vegetarian", "contains-gluten", "contains-dairy"]
@@ -244,6 +255,7 @@ const menuData = {
             calories: "380 cal",
             prepTime: "5 mins",
             ingredients: ["Mascarpone", "Coffee", "Ladyfingers", "Cocoa"],
+            image:"/static/assets/dessert2.jpeg",
             icon: "🍰",
             modelPath: "models/dish4.glb",
             dietaryTags: ["vegetarian", "contains-gluten", "contains-dairy"]
@@ -259,6 +271,7 @@ const menuData = {
             calories: "320 cal",
             prepTime: "3 mins",
             ingredients: ["Vanilla Ice Cream", "Chocolate Sauce", "Nuts", "Cherry"],
+            image:"/static/assets/dessert3.jpeg",
             icon: "🍨",
             modelPath: "models/dish4.glb",
             dietaryTags: ["vegetarian", "contains-dairy"]

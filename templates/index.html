@@ -26,67 +26,40 @@ Overview:
                 <div class="logo-icon">
                     <i class="fas fa-utensils"></i>
                 </div>
-                <span class="logo-text">GoodLuck</span>
+                <span class="logo-text">Step Inn <br>   Cafe</span>
             </div>
-            <button class="settings-btn" onclick="openSettings()">
-                <i class="fas fa-cog"></i>
-            </button>
         </header>
-
-        <!-- Hero Section -->
-        <section class="hero">
-            <div class="hero-content">
-                <h1>Experience Dining<br><span class="accent-text">in Augmented Reality</span></h1>
-                <p>Welcome to the future of restaurant menus. See your food before you order with our innovative AR technology.</p>
-                
-                <!-- Main Action Buttons -->
-                <div class="main-actions">
-                    <button class="action-btn primary-btn" onclick="openMenu()">
-                        <div class="btn-icon">
-                            <i class="fas fa-book-open"></i>
-                        </div>
-                        <div class="btn-content">
-                            <span class="btn-title">View Menu</span>
-                            <span class="btn-subtitle">Explore our dishes in AR</span>
-                        </div>
-                    </button>
-                    
-                    <button class="action-btn secondary-btn" onclick="openSettings()">
-                        <div class="btn-icon">
-                            <i class="fas fa-cog"></i>
-                        </div>
-                        <div class="btn-content">
-                            <span class="btn-title">Settings</span>
-                            <span class="btn-subtitle">Customize your experience</span>
-                        </div>
-                    </button>
-                </div>
-            </div>
+        <!-- Top Decorative Images -->
+        <img src="/static/assets/drinks2.jpg" alt="Drinks" class="drinks-img" />
+        <img src="/static/assets/food.png" alt="Food" class="foodd-img" />
+        <!-- About Us Section -->
+        <section class="about-us">
+            <h2 class="about-title">About Us</h2>
+            <p class="about-desc">Welcome to [Restaurant Name], where every dish is crafted with love and fresh ingredients.
+                We serve a blend of classic flavors and modern twists to satisfy every craving.
+                Our cozy space and warm service make you feel right at home.
+                Whether it’s a quick bite or a relaxed meal, we’ve got you covered.
+                Come for the food, stay for the experience.</p>
         </section>
+        <section class="AR">
+            <h2 class="AR-title">Experience AR</h2>
+            <p class="ar-desc">
+                Our website offers an immersive AR experience, letting users interact with 3D models of dishes in real-time. Visualize food items and explore the menu effortlessly.
+            </p>
+            
 
-        <!-- Restaurant Info -->
-        <section class="restaurant-info">
-            <div class="info-grid">
-                <div class="info-card">
-                    <div class="info-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="info-content">
-                        <h3>Opening Hours</h3>
-                        <p>Mon-Sun: 11:00 AM - 11:00 PM</p>
-                    </div>
-                </div>
-                <div class="info-card">
-                    <div class="info-icon">
-                        <i class="fas fa-phone"></i>
-                    </div>
-                    <div class="info-content">
-                        <h3>Contact</h3>
-                        <p>+1 (555) 123-4567</p>
-                    </div>
-                </div>
-            </div>
         </section>
+        <!-- Opening Hours Image and Text -->
+        <img src="/static/assets/opening_hours.png" alt="Opening Hours" class="opening-hours-img" />
+        <div class="opening-hours-text">
+            Opening Hours<br>9am-12pm<br><br>Contact info<br>8767563321
+        </div>
+        <!-- Bottom Menu Area -->
+        <div class="bottom-menu-area">
+            <img src="/static/assets/arrow.jpg" alt="Arrow" class="arrow-img" />
+            <button class="view-menu-btn" onclick="openMenu()">VIEW MENU</button>
+            <div class="enjoy-text">Enjoy our dish</div>
+        </div>
     </div>
 
     <!-- Settings Modal -->
