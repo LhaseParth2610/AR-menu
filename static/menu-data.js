@@ -91,7 +91,7 @@ const menuData = {
             ingredients: ["Mozzarella", "Fresh Basil", "Tomato Sauce", "Olive Oil"],
             image:"/static/assets/pizza2.jpeg",
             icon: "🍕",
-            modelPath: "models/dish5.glb",
+            modelPath: "models/pizza2.glb",
             dietaryTags: ["vegetarian", "contains-gluten", "contains-dairy"]
         },
         {
