@@ -316,8 +316,50 @@ Overview:
         }
 
         function openHelp() {
-            alert("This is where the help modal or FAQ would go.");
-        }
+        // Create a modal element
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        modal.style.display = 'flex';
+        modal.style.justifyContent = 'center';
+        modal.style.alignItems = 'center';
+        modal.style.zIndex = '1000';
+
+        // Create an image element for the GIF
+        const gif = document.createElement('img');
+        gif.src = '/static/assets/help.gif'; // Path to your GIF in the assets folder
+        gif.style.maxWidth = '90%';
+        gif.style.maxHeight = '90%';
+        gif.alt = 'Help GIF';
+
+        // Create a close button
+        const closeButton = document.createElement('button');
+        closeButton.textContent = 'Close';
+        closeButton.style.position = 'absolute';
+        closeButton.style.top = '20px';
+        closeButton.style.right = '20px';
+        closeButton.style.padding = '10px 20px';
+        closeButton.style.backgroundColor = '#fff';
+        closeButton.style.border = 'none';
+        closeButton.style.cursor = 'pointer';
+        closeButton.style.fontSize = '16px';
+
+        // Close the modal when the button is clicked
+        closeButton.onclick = () => {
+            document.body.removeChild(modal);
+        };
+
+        // Append the GIF and close button to the modal
+        modal.appendChild(gif);
+        modal.appendChild(closeButton);
+
+        // Append the modal to the body
+        document.body.appendChild(modal);
+    }
 
         document.querySelectorAll('.category-item').forEach(item => {
             item.addEventListener('click', () => {
