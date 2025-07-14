@@ -1,0 +1,66 @@
+# Summary of AR View Enhancements
+
+This document outlines the recent changes made to improve the stability and realism of the AR food visualization feature.
+
+## 1. `static/menu-data.js`: Added Custom Model Sizing
+
+To ensure each 3D food model is displayed at a realistic, real-world scale, a new property, `modelSize`, has been added to each item in the `menuData` object. 
+This allows for fine-tuned control over the size of each model in the AR view.
+
+### Logic:
+By defining a specific size for each item, we can scale the models to better represent their actual physical dimensions. For example, a pizza will appear larger than a burger, and a drink will be appropriately scaled relative to the other items.
+
+### Code Example (`static/menu-data.js`):
+A `modelSize` property (e.g., `modelSize: 1.2`) was added to each menu item.
+
+```javascript
+// ...
+bestsellers: [
+    {
+        id: 1,
+        name: "Classic Cheeseburger",
+        // ... other properties
+        modelPath: "models/dish1.glb",
+        modelSize: 1.2, // <-- ADDED: Defines the model's target size in the AR scene
+        dietaryTags: ["non-vegetarian", "contains-gluten", "contains-dairy"]
+    },
+    // ... other items
+]
+// ...
+```
+
+## 2. `templates/fullar.html`: Enhanced AR Stability and Dynamic Scaling
+
+The AR scene (`fullar.html`) was updated to consume the new `modelSize` data and to improve the underlying tracking performance.
+
+### Logic:
+- **Improved Tracking**: The `arjs` properties on the `<a-scene>` element were configured to use the `best` tracking method available, which helps create a more stable and consistent AR experience across different devices.
+- **Dynamic Scaling**: The JavaScript logic was modified to retrieve the `modelSize` from the `currentItem` object and use it to normalize the model's scale when it loads. If a `modelSize` is not specified for an item, it defaults to a standard size (`1`) to prevent errors.
+
+### Code Example (`templates/fullar.html`):
+
+#### A-Frame Scene Enhancement:
+The `arjs` attribute was updated to improve tracking stability.
+
+```html
+<a-scene embedded arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;" renderer="colorManagement: true; physicallyCorrectLights: true;" vr-mode-ui="enabled: false">
+    <!-- ... -->
+</a-scene>
+```
+
+#### JavaScript Model Scaling Logic:
+The `model-loaded` event listener was updated to use the `modelSize` property.
+
+```javascript
+// ...
+      // Set up model loading events
+      const modelEntity = document.getElementById('foodModel');
+      
+      modelEntity.addEventListener('model-loaded', () => {
+        // debug('Model loaded successfully');
+        // Use the custom model size if available, otherwise default to 1
+        normalizeModelSize(modelEntity, currentItem.modelSize || 1);
+        showLoadingIndicator(false);
+      });
+// ...
+```
