@@ -152,8 +152,8 @@ body {
 
 /* Bottom Area */
 .opening-hours-img {
-    bottom: 10%;
-    left: -2%;
+    bottom: 7%;
+    left: -1%;
     width: 56vw;
     max-width: 240px;
     height: auto;
@@ -161,8 +161,8 @@ body {
 }
 
 .opening-hours-text {
-    bottom: 14%;
-    left: 15%;
+    bottom: 11%;
+    left: 16.5%;
     width: auto;
     color: #23404a;
     font-size: clamp(0.8rem, 3vw, 1rem);
@@ -174,7 +174,7 @@ body {
 }
 
 .bottom-menu-area {
-    bottom: 15%;
+    bottom: 12%;
     right: -2%;
     width: 50%;
     display: flex;
@@ -191,7 +191,7 @@ body {
     animation: bounce 1.5s infinite;
     margin-bottom: -10px;
     align-self: baseline;
-    margin-left: 10%;
+    margin-left: 15%;
 }
 
 @keyframes bounce {
