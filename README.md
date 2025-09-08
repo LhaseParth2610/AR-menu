@@ -9,10 +9,10 @@ Watch the live demo on YouTube: [TasteAR Demo](https://www.youtube.com/watch?v=p
 ## 📸 Screenshots
 
 ### Landing Page  
-![Landing Page](static/assets/landing.png)
+![Landing Page](static/assets/landing.jpg)
 
 ### Menu Page  
-![Menu Page](static/assets/screenshots/menu.png)
+![Menu Page](static/assets/menu.jpg)
 
 
 ## 🌟 Features
@@ -25,10 +25,10 @@ Watch the live demo on YouTube: [TasteAR Demo](https://www.youtube.com/watch?v=p
 - **Modern UI**: Clean and intuitive user interface
 
 ### 3D Model Preview  
-![3D Model](static/assets/screenshots/3dmodel.png)
+![3D Model](static/assets/3dmodel.jpg)
 
 ### AR View  
-![AR View](static/assets/screenshots/arview.png)
+![AR View](static/assets/arview.jpg)
 
 ## 🛠️ Technologies Used
 
