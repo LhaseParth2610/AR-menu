@@ -43,8 +43,7 @@ Watch the live demo on YouTube: [TasteAR Demo](https://www.youtube.com/watch?v=p
 
 - **Frontend**:
   - HTML5, CSS3, JavaScript
-  - A-Frame.js for AR functionality
-  - AR.js for marker-based AR
+  - Google model viewer again for the ar functionality
   - Google's Model Viewer for 3D previews
   - Font Awesome for icons
   - Google Fonts for typography
@@ -102,7 +101,7 @@ Watch the live demo on YouTube: [TasteAR Demo](https://www.youtube.com/watch?v=p
 3. **AR Experience**:
    - Click "View in AR" on any food item
    - Allow camera access when prompted
-   - Point your camera at the AR marker
+   - Point your camera Towards any flat surface
    - View the 3D model in your real environment
 
 ## 📁 Project Structure
