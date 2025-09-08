@@ -10,12 +10,14 @@ Watch the live demo on YouTube: [TasteAR Demo](https://www.youtube.com/watch?v=p
 
 ### Landing Page  
 <p align="center">
-  <img src="static/assets/landing.jpg" alt="Landing Page" width="400">
+  <img src="static/assets/landing.jpg" alt="Landing Page" width="200">
 </p>
 
 
 ### Menu Page  
-![Menu Page](static/assets/menu.jpg)
+![Menu Page]<p align="center">
+  <img src="static/assets/menu.jpg" alt="Landing Page" width="200">
+</p>
 
 
 ## 🌟 Features
@@ -28,10 +30,14 @@ Watch the live demo on YouTube: [TasteAR Demo](https://www.youtube.com/watch?v=p
 - **Modern UI**: Clean and intuitive user interface
 
 ### 3D Model Preview  
-![3D Model](static/assets/3dmodel.jpg)
+![3D Model]<p align="center">
+  <img src="static/assets/3dmodel.jpg" alt="Landing Page" width="200">
+</p>
 
 ### AR View  
-![AR View](static/assets/arview.jpg)
+![AR View]<p align="center">
+  <img src="static/assets/arview.jpg" alt="Landing Page" width="200">
+</p>
 
 ## 🛠️ Technologies Used
 
