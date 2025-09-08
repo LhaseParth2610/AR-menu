@@ -2,7 +2,7 @@
 
 TasteAR is an innovative web application that brings restaurant menus to life using Augmented Reality (AR) technology. It allows customers to view 3D models of food items in AR, providing an immersive dining experience before ordering.
 ## 🎥 Demo Video
-Watch the live demo on YouTube: [TasteAR Demo](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
+Watch the live demo on YouTube: [TasteAR Demo]([https://www.youtube.com/watch?v=YOUR_VIDEO_ID](https://youtube.com/shorts/pzrFSlivcYM))
 
 ---
 
