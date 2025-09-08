@@ -9,7 +9,7 @@ Watch the live demo on YouTube: [TasteAR Demo](https://www.youtube.com/watch?v=p
 ## 📸 Screenshots
 
 ### Landing Page  
-![Landing Page](static/assets/screenshots/landing.png)
+![Landing Page](static/assets/landing.png)
 
 ### Menu Page  
 ![Menu Page](static/assets/screenshots/menu.png)
